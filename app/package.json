@@ -8,6 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint --max-warnings 0",
+    "lint:fix": "expo lint --fix",
     "typecheck": "tsc",
     "prepare": "cd .. && husky app/.husky"
   },
@@ -45,6 +46,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.2",
     "typescript": "~5.9.2"
   },

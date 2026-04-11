@@ -10,7 +10,10 @@ Node is installed via [nvm](https://github.com/nvm-sh/nvm). nvm can be installed
 
 This project uses [pnpm](https://pnpm.io/) as the package manager. To install pnpm, Corepack (which automatically comes with Node) needs to be enabled. This is done by running `corepack enable` in the terminal. Enabling Corepack allows pnpm to be automatically installed the first time a you use a `pnpm` command.
 
-After enabling corepack, run `pnpm i` from the [frontend](/frontend) directory to install the necessary frontend dependencies.
+After enabling corepack, run `pnpm i` from this directory to install the necessary dependencies.
+
+## Install pre-commit hooks
+To install the pre-commit hooks, run `pnpm prepare` from this directory.
 
 ## Get started
 
