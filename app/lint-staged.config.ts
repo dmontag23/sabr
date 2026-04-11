@@ -1,7 +1,7 @@
-/**
- * @filename: lint-staged.config.js
- * @type {import('lint-staged').Configuration}
- */
-export default {
+import type { Configuration } from "lint-staged";
+
+const config = {
   "*.{js,jsx,ts,tsx}": "pnpm lint:fix",
-};
+} satisfies Configuration;
+
+export default config;
