@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "lint": "expo lint --max-warnings 0",
     "typecheck": "tsc",
-    "prepare": "husky"
+    "prepare": "cd .. && husky app/.husky"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

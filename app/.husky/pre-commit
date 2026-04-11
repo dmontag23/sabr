@@ -1,3 +1,4 @@
-pnpm test
+cd app
+npm test
 
 exit 1
