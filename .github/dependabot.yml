@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+
+  - package-ecosystem: npm
+    directory: /app
+    schedule:
+      interval: daily
+    # ignore all expo dependencies that are upgraded manually by following https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/
+    ignore:
+      - dependency-name: "expo*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
+      - dependency-name: "react-native*"
+      - dependency-name: "@types/react"
+      - dependency-name: "eslint-config-expo"
