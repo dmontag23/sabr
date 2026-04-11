@@ -1,0 +1,42 @@
+name: Mobile App
+on:
+  pull_request:
+    paths:
+      - app/**
+  push:
+    branches:
+      - main
+    paths:
+      - app/**
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: "app/package.json"
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: "app/.nvmrc"
+          cache: "pnpm"
+          cache-dependency-path: "app/pnpm-lock.yaml"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint and Format
+        run: pnpm lint
