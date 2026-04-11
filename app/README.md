@@ -12,9 +12,6 @@ This project uses [pnpm](https://pnpm.io/) as the package manager. To install pn
 
 After enabling corepack, run `pnpm i` from this directory to install the necessary dependencies.
 
-## Install pre-commit hooks
-To install the pre-commit hooks, run `pnpm prepare` from this directory.
-
 ## Get started
 
 Start the app buy running
