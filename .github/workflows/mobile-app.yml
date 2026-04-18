@@ -74,9 +74,6 @@ jobs:
       - name: Generate native iOS project
         run: pnpm expo prebuild --platform ios
 
-      - name: Install CocoaPods
-        run: pod install --project-directory=ios
-
       - name: Install and Build Simulator .app
         run: xcodebuild \
           -workspace "ios/sabr.xcworkspace" \
