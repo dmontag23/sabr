@@ -106,4 +106,5 @@ jobs:
       - name: Run Maestro
         env:
           MAESTRO_CLI_NO_ANALYTICS: true
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "120000"
         run: maestro test .maestro
