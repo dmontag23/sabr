@@ -77,16 +77,13 @@ jobs:
       - name: Install CocoaPods
         run: pod install --project-directory=ios
 
-      - name: Install iPhone 12 simulator
-        run: xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12
-
-      - name: Build Simulator .app
+      - name: Install and Build Simulator .app
         run: xcodebuild \
           -workspace "ios/sabr.xcworkspace" \
           -scheme sabr \
           -configuration Release \
           -sdk iphonesimulator \
-          -destination "platform=iOS Simulator,name=iPhone 12,OS=latest" \
+          -destination "id=$(xcrun simctl create 'iPhone 12' com.apple.CoreSimulator.SimDeviceType.iPhone-12)" \
           -derivedDataPath ios/build \
           build
 
