@@ -1,0 +1,25 @@
+name: Set up app toolchain
+description: Check out the repo, install pnpm and Node, then install app dependencies
+
+runs:
+  using: composite
+  steps:
+    - name: Check out repository code
+      uses: actions/checkout@v6
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v6
+      with:
+        package_json_file: app/package.json
+
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: app/.nvmrc
+        cache: pnpm
+        cache-dependency-path: app/pnpm-lock.yaml
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      working-directory: app
+      shell: bash

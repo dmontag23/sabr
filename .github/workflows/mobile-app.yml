@@ -3,11 +3,13 @@ on:
   pull_request:
     paths:
       - .github/workflows/mobile-app.yml
+      - .github/actions/setup-app/action.yml
       - app/**
 
   push:
     paths:
       - .github/workflows/mobile-app.yml
+      - .github/actions/setup-app/action.yml
       - app/**
     branches:
       - main
@@ -15,32 +17,17 @@ on:
 env:
   HUSKY: "0"
 
+defaults:
+  run:
+    working-directory: app
+
 jobs:
-  build-and-test:
-    name: Build and Test
+  static-checks:
+    name: Static Checks
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: app
 
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          package_json_file: "app/package.json"
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: "app/.nvmrc"
-          cache: "pnpm"
-          cache-dependency-path: "app/pnpm-lock.yaml"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup-app
 
       - name: Typecheck
         run: pnpm typecheck
@@ -51,27 +38,8 @@ jobs:
   e2e_tests:
     name: E2E tests (IOS) 📱
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: app
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          package_json_file: "app/package.json"
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: "app/.nvmrc"
-          cache: "pnpm"
-          cache-dependency-path: "app/pnpm-lock.yaml"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup-app
 
       - name: Generate native iOS project
         run: pnpm expo prebuild --platform ios
