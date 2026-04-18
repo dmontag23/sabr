@@ -2,10 +2,12 @@ name: Mobile App
 on:
   pull_request:
     paths:
+      - .github/workflows/mobile-app.yml
       - app/**
 
   push:
     paths:
+      - .github/workflows/mobile-app.yml
       - app/**
     branches:
       - main
