@@ -1,12 +1,9 @@
 name: Set up app toolchain
-description: Check out the repo, install pnpm and Node, then install app dependencies
+description: Install pnpm and Node, then install app dependencies
 
 runs:
   using: composite
   steps:
-    - name: Check out repository code
-      uses: actions/checkout@v6
-
     - name: Install pnpm
       uses: pnpm/action-setup@v6
       with:

@@ -27,6 +27,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
       - uses: ./.github/actions/setup-app
 
       - name: Typecheck
@@ -39,6 +42,9 @@ jobs:
     name: E2E tests (IOS) 📱
     runs-on: macos-latest
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
       - uses: ./.github/actions/setup-app
 
       - name: Generate native iOS project
