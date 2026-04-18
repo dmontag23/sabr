@@ -22,8 +22,8 @@ defaults:
     working-directory: app
 
 jobs:
-  static-checks:
-    name: Static Checks
+  static-checks-and-unit-test:
+    name: Static checks and unit test
     runs-on: ubuntu-latest
 
     steps:
@@ -35,8 +35,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Lint and Format
+      - name: Lint and format
         run: pnpm lint
+
+      - name: Unit test
+        run: pnpm test:unit
 
   e2e_tests:
     name: E2E tests (IOS) 📱
@@ -81,4 +84,4 @@ jobs:
         env:
           MAESTRO_CLI_NO_ANALYTICS: true
           MAESTRO_DRIVER_STARTUP_TIMEOUT: "120000"
-        run: maestro test .maestro
+        run: pnpm test:e2e
