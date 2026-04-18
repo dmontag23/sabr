@@ -1,0 +1,4 @@
+appId: com.dmontag23.sabr
+---
+- launchApp
+- assertVisible: ".*to edit this screen."
