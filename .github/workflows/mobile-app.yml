@@ -49,6 +49,9 @@ jobs:
   e2e_tests:
     name: E2E tests (IOS) 📱
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: app
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
