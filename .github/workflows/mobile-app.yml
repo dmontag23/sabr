@@ -77,14 +77,15 @@ jobs:
         run: pnpm expo prebuild --platform ios
 
       - name: Install and Build Simulator .app
-        run: xcodebuild \
-          -workspace "ios/sabr.xcworkspace" \
-          -scheme sabr \
-          -configuration Release \
-          -sdk iphonesimulator \
-          -destination "id=$(xcrun simctl create 'iPhone 12' com.apple.CoreSimulator.SimDeviceType.iPhone-12)" \
-          -derivedDataPath ios/build \
-          build
+        run: |
+          xcodebuild \
+            -workspace "ios/sabr.xcworkspace" \
+            -scheme sabr \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination "id=$(xcrun simctl create 'iPhone 12' com.apple.CoreSimulator.SimDeviceType.iPhone-12)" \
+            -derivedDataPath ios/build \
+            build
 
       - name: Install Maestro
         run: curl -fsSL "https://get.maestro.mobile.dev" | bash
