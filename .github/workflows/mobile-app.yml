@@ -76,19 +76,32 @@ jobs:
       - name: Generate native iOS project
         run: pnpm expo prebuild --platform ios
 
-      - name: Install and Build Simulator .app
+      - name: Install simulator
+        run: |
+          UDID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
+          echo "UDID=${UDID}" >> "${GITHUB_ENV}"
+
+      - name: Build simulator .app
         run: |
           xcodebuild \
             -workspace "ios/sabr.xcworkspace" \
             -scheme sabr \
             -configuration Release \
             -sdk iphonesimulator \
-            -destination "id=$(xcrun simctl create 'iPhone 12' com.apple.CoreSimulator.SimDeviceType.iPhone-12)" \
+            -destination "id=${UDID}" \
             -derivedDataPath ios/build \
             build
 
+      - name: Launch simulator
+        run: xcrun simctl boot "${UDID}"
+
+      - name: Install app onto simulator
+        run: xcrun simctl install booted ios/build/Build/Products/Release-iphonesimulator/sabr.app
+
       - name: Install Maestro
-        run: curl -fsSL "https://get.maestro.mobile.dev" | bash
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       - name: Run Maestro
         run: maestro test .maestro
