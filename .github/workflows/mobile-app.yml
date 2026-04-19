@@ -105,7 +105,7 @@ jobs:
 
       # TODO: Test a release build instead?
       - name: Build debug APK
-        run: ./android/gradlew assembleDebug --no-daemon
+        run: ./android/gradlew -p android assembleDebug --no-daemon
 
       - name: Install Maestro
         run: |
