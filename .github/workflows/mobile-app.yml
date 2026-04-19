@@ -98,14 +98,18 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: 21
 
       - name: Generate native Android project
         run: pnpm expo prebuild --platform android
 
+      # Used to cache Gradle and make builds faster
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
       # TODO: Test a release build instead?
       - name: Build debug APK
-        run: ./android/gradlew -p android assembleDebug --no-daemon
+        run: ./android/gradlew -p android assembleDebug -PreactNativeArchitectures=x86_64
 
       - name: Install Maestro
         run: |
