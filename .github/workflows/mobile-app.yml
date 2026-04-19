@@ -14,18 +14,17 @@ on:
     branches:
       - main
 
-env:
-  HUSKY: "0"
-
 defaults:
   run:
     working-directory: app
 
+env:
+  HUSKY: "0"
+
 jobs:
   static-checks-and-unit-test:
-    name: Static checks and unit test
+    name: Static checks and unit test 🧪
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
@@ -41,8 +40,8 @@ jobs:
       - name: Unit test
         run: pnpm test:unit
 
-  e2e_tests:
-    name: E2E tests (IOS) 📱
+  e2e_tests_ios:
+    name: E2E tests - IOS 📱
     runs-on: macos-latest
     steps:
       - name: Check out repository code
@@ -85,3 +84,41 @@ jobs:
           MAESTRO_CLI_NO_ANALYTICS: true
           MAESTRO_DRIVER_STARTUP_TIMEOUT: "120000"
         run: pnpm test:e2e
+
+  e2e_tests_android:
+    name: E2E tests - Android 🤖
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-app
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Generate native Android project
+        run: pnpm expo prebuild --platform android
+
+      # TODO: Test a release build instead?
+      - name: Build debug APK
+        run: ./android/gradlew assembleDebug --no-daemon
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run Maestro on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          MAESTRO_CLI_NO_ANALYTICS: true
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "120000"
+        with:
+          api-level: 34
+          script: |
+            adb install "android/app/build/outputs/apk/debug/app-debug.apk"
+            pnpm test:e2e
