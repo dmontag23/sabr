@@ -107,9 +107,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      # TODO: Test a release build instead?
-      - name: Build debug APK
-        run: ./android/gradlew -p android assembleDebug -PreactNativeArchitectures=x86_64
+      - name: Build release APK
+        run: ./android/gradlew -p android assembleRelease -PreactNativeArchitectures=x86_64
 
       - name: Install Maestro
         run: |
@@ -126,5 +125,5 @@ jobs:
           arch: x86_64
           working-directory: app
           script: |
-            adb install "android/app/build/outputs/apk/debug/app-debug.apk"
+            adb install "android/app/build/outputs/apk/release/app-release.apk"
             pnpm test:e2e
