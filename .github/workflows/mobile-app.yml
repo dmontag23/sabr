@@ -119,6 +119,7 @@ jobs:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: "120000"
         with:
           api-level: 34
+          arch: x86_64
           script: |
             adb install "android/app/build/outputs/apk/debug/app-debug.apk"
             pnpm test:e2e
