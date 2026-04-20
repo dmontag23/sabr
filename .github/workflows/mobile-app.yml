@@ -42,7 +42,7 @@ jobs:
 
   e2e_tests_ios:
     name: E2E tests - IOS 📱
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
