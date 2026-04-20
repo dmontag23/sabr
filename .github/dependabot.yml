@@ -13,8 +13,8 @@ updates:
     ignore:
       - dependency-name: "expo*"
       - dependency-name: "@expo/*"
+      - dependency-name: "*-expo"
       - dependency-name: "react"
       - dependency-name: "react-dom"
       - dependency-name: "react-native*"
       - dependency-name: "@types/react"
-      - dependency-name: "eslint-config-expo"
