@@ -9,11 +9,16 @@ resource "tfe_workspace" "bootstrap" {
   organization = tfe_organization.main.name
 }
 
+// TODO: (Low priority) Rotate this token on a fixed schedule
+resource "tfe_organization_token" "bootstrap_org_token" {
+  organization = tfe_organization.main.name
+}
+
 resource "tfe_variable" "tfe_token" {
   workspace_id = tfe_workspace.bootstrap.id
   key          = "TFE_TOKEN"
-  value        = var.tfe_token
+  value        = tfe_organization_token.bootstrap_org_token.token
   category     = "env"
   sensitive    = true
-  description  = "User token used by the tfe provider."
+  description  = "Org token used by the tfe provider."
 }
