@@ -1,19 +1,33 @@
-# HCP Terraform
+# Hashicorp Cloud Platform (HCP) Terraform
 
-Terraform for **HashiCorp Cloud Platform (HCP) Terraform** resources: organizations, workspaces, variables, VCS settings, and anything else exposed by the [`hashicorp/tfe`](https://registry.terraform.io/providers/hashicorp/tfe/latest) provider.
+Manages HCP Terraform itself: the org, projects, workspaces, etc.
 
-## Requirements
+## What this module managers
 
-- Terraform `>= 1.14`
-- A [user or team API token](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens) exported as `TFE_TOKEN` (or `TF_TOKEN_app_terraform_io`) when you run `terraform` locally against this stack
+- The HCP Terraform organization
+- The `bootstrap` workspace (this code's own state lives here)
+- The `sabr` project for the `sabr` app.
 
-## Commands
+## Execution model
+
+This stack runs in **local execution mode**: plan and apply happen on your laptop, state is stored in HCP Terraform. There is no PR-driven plan or merge-driven apply for this repo. Changes go through PR review, and someone runs `terraform apply` after merge.
+
+This is intentional; remote execution requires a user token to manage GitHub App VCS connections. Setting a user token (e.g. as a variable in the `bootstrap` workspace) would break remote execution if said token is no longer able to be used.
+
+## Day-to-day usage
 
 ```bash
 cd infra/hcp-terraform
+
 terraform init
 terraform plan
 terraform apply
 ```
 
-After changing provider versions, run `terraform init -upgrade` and commit the updated `.terraform.lock.hcl` if you add one.
+## First-time setup or disaster recovery
+
+See [RUNBOOK.md](./RUNBOOK.md).
+
+# TODO
+
+The configuration here is for all of sabs-apps, not just sabr. It should live in a separate repo.
