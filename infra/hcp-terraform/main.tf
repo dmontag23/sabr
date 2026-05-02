@@ -1,6 +1,6 @@
 resource "tfe_organization" "main" {
-  name  = var.organization_name
-  email = var.organization_email
+  name  = "sabs-apps"
+  email = "dmontag23@gmail.com"
 }
 
 resource "tfe_workspace" "bootstrap" {
