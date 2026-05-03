@@ -15,11 +15,26 @@ updates:
     schedule:
       interval: daily
     # ignore all expo dependencies that are upgraded manually by following https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/
+    # comes from bundledNativeModules.json in the installed `expo` package and should be updated with each Expo SDK upgrade
     ignore:
-      - dependency-name: "expo*"
       - dependency-name: "@expo/*"
+      - dependency-name: "@react-native-async-storage/*"
+      - dependency-name: "@react-native-community/*"
+      - dependency-name: "@react-native-masked-view/*"
+      - dependency-name: "@react-native-picker/*"
+      - dependency-name: "@react-native-segmented-control/*"
+      - dependency-name: "@react-native/*"
+      - dependency-name: "@react-navigation/*"
+      - dependency-name: "@sentry/react-native"
+      - dependency-name: "@shopify/flash-list"
+      - dependency-name: "@shopify/react-native-skia"
+      - dependency-name: "@stripe/stripe-react-native"
+      - dependency-name: "@types/react"
       - dependency-name: "*-expo"
+      - dependency-name: "expo*"
+      - dependency-name: "lottie-react-native"
       - dependency-name: "react"
       - dependency-name: "react-dom"
       - dependency-name: "react-native*"
-      - dependency-name: "@types/react"
+      - dependency-name: "react-server-dom-webpack"
+      - dependency-name: "unimodules-*"
