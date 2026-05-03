@@ -39,7 +39,7 @@ cd infra/hcp-terraform
 rm -rf .terraform/
 terraform init -backend=false
 terraform apply \
- -target=tfe_organization.main \
+ -target=tfe_organization.sabs_apps \
  -target=tfe_workspace.bootstrap \
  -target=tfe_workspace_settings.bootstrap
 ```

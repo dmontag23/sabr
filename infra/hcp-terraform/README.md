@@ -2,7 +2,7 @@
 
 Manages HCP Terraform itself: the org, projects, workspaces, etc.
 
-## What this module managers
+## What this module manages
 
 - The HCP Terraform organization
 - The `bootstrap` workspace (this code's own state lives here)

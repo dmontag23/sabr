@@ -1,3 +1,0 @@
-cd app
-pnpm lint-staged
-pnpm typecheck

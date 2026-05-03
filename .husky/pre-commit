@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+# -e: exit immediately if any command fails
+# -u: error on unset variables
+set -eu
+
+cd app
+pnpm lint-staged
+# TODO: only typecheck staged files?
+pnpm typecheck
+
+cd ..
+pre-commit run
