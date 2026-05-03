@@ -1,10 +1,9 @@
 import { render } from "@testing-library/react-native";
+import Index from "@/app/index";
 
-import HomeScreen from "@/src/app/index";
-
-describe("<HomeScreen />", () => {
+describe("<Index />", () => {
   test("Text renders correctly on HomeScreen", () => {
-    const { getByText } = render(<HomeScreen />);
+    const { getByText } = render(<Index />);
 
     expect(getByText("Edit app/index.tsx to edit this screen.")).toBeVisible();
   });
