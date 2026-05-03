@@ -29,4 +29,4 @@ jobs:
         uses: terraform-linters/setup-tflint@v6
 
       - name: Run pre-commit
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: pre-commit run --all-files --show-diff-on-failure --color always
