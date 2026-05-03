@@ -20,7 +20,7 @@ resource "github_repository_ruleset" "default_branch_protection" {
   bypass_actors {
     actor_type  = "RepositoryRole"
     actor_id    = 5
-    bypass_mode = "pull_request"
+    bypass_mode = "always"
   }
 
   rules {
