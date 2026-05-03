@@ -8,6 +8,7 @@ Manages HCP Terraform itself: the org, projects, workspaces, etc.
 - The `bootstrap` workspace (this code's own state lives here)
 - The `sabr` project for the `sabr` app.
 - The `sabr-github` workspace for [GitHub infrastructure](/infra/github/)
+- The `sabr-supabase-*` workspaces for [Supabase infrastructure](/infra/supabase/)
 
 ## Execution model
 
@@ -15,7 +16,7 @@ This stack runs in **local execution mode**: plan and apply happen on your lapto
 
 This is intentional; remote execution requires a user token to manage GitHub App VCS connections. Setting a user token (e.g. as a variable in the `bootstrap` workspace) would break remote execution if said token is no longer able to be used.
 
-Sensitive workspace variables for downstream workspaces can be managed here using `tfe_variable` with write-only values.
+Workspace variables for downstream workspaces can be managed here using `tfe_variable`. This includes environment variables (for example `GITHUB_TOKEN` and `SUPABASE_ACCESS_TOKEN`) and Terraform variables (for example `organization_id`).
 
 ## Day-to-day usage
 
@@ -27,7 +28,7 @@ terraform plan
 terraform apply
 ```
 
-When rotating the GitHub token, update `secrets.auto.tfvars` and increment `value_wo_version` in [sabr.tf](./sabr.tf) before running `terraform apply` (see the [runbook](./RUNBOOK.md) for more information).
+When rotating GitHub or Supabase tokens, update `secrets.auto.tfvars` and increment `value_wo_version` for the corresponding `tfe_variable` resources in [sabr.tf](./sabr.tf) before running `terraform apply` (see the [runbook](./RUNBOOK.md) for more information).
 
 ## First-time setup or disaster recovery
 

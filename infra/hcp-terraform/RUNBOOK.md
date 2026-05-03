@@ -29,16 +29,24 @@ to create a user token in the HCP Terraform account. This token will be used to 
 
 Follow the browser prompts. This puts an API token in `~/.terraform.d/credentials.tfrc.json`.
 
-### 3 Create GitHub token and local vars file
+### 3 Create provider tokens and local vars file
 
-Create a fine-grained PAT in GitHub:
+First, create a fine-grained personal access token (PAT) in GitHub:
 
-1. Go to **GitHub → Profile Picture → Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+1. Go to **Profile Picture → Settings → Developer settings → Personal access tokens → Fine-grained tokens**
 2. Create token scoped to the `sabr` repository.
 3. Grant repository permission **Administration: Read and write**
 4. Copy the token value
 
 In `infra/hcp-terraform`, create a `secrets.auto.tfvars` file. In that file, paste `github_token = "<token>"`.
+
+Then, create a personal access token in Supabase:
+
+1. Go **Dashboard → Account preferences → Access Tokens**
+2. Generate a new token. The name does not matter. Keep the default 30 day expiry time.
+3. Copy the token value
+
+Paste that value in `secrets.auto.tfvars` as `sabr_supabase_prod_access_token = "<token>"`. Then get the organization id from the value after `org` in the supabase URL and paste that as `sabr_supabase_organization_id = <org id>`.
 
 ### 4. Create the org and bootstrap workspace using local state
 
