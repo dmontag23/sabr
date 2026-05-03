@@ -22,7 +22,7 @@ resource "tfe_workspace_settings" "bootstrap" {
   # The remote executor would need to use such a token. However, this is problematic
   # because that user's account could be lost, that user could leave the project, etc, which would break the remote executor.
   # Local users will already have a user auth token from running `terraform login` locally, so this is the
-  # flow with the least amount of friction. This also limits the blast radius of applying changes to HCP Terraform, 
+  # flow with the least amount of friction. This also limits the blast radius of applying changes to HCP Terraform,
   # which controls all other infra state.
   execution_mode = "local"
 }

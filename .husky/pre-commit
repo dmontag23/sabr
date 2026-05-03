@@ -5,7 +5,7 @@ set -eu
 
 cd app
 pnpm lint-staged
-# TODO: only typecheck staged files?
+# TODO: only typecheck affected files somehow?
 pnpm typecheck
 
 cd ..
