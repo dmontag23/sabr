@@ -38,3 +38,8 @@ updates:
       - dependency-name: "react-native*"
       - dependency-name: "react-server-dom-webpack"
       - dependency-name: "unimodules-*"
+
+  - package-ecosystem: terraform
+    directories: ["/infra/*"]
+    schedule:
+      interval: daily
