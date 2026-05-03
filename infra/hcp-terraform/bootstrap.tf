@@ -26,3 +26,7 @@ resource "tfe_workspace_settings" "bootstrap" {
   # which controls all other infra state.
   execution_mode = "local"
 }
+
+data "tfe_github_app_installation" "gha_installation" {
+  name = "dmontag23"
+}

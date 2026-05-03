@@ -8,7 +8,8 @@ The procedure has three phases: (1) create the org and bootstrap workspace again
 
 - [Terraform CLI installed locally](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 - [HCP Terraform account](https://app.terraform.io/login)
-- A [GitHub account](https://github.com) with admin permissions on the GitHub org or personal account that owns this repo
+- The `sabr` GitHub repository exists because the `sabr-github` workspace is VCS-connected to that repo. Create it if it does not exist.
+- A GitHub fine-grained personal access token (PAT) for the `sabr` repo with **Administration: Read and write** permission.
 
 ## Steps
 
@@ -28,7 +29,18 @@ to create a user token in the HCP Terraform account. This token will be used to 
 
 Follow the browser prompts. This puts an API token in `~/.terraform.d/credentials.tfrc.json`.
 
-### 3. Create the org and bootstrap workspace using local state
+### 3 Create GitHub token and local vars file
+
+Create a fine-grained PAT in GitHub:
+
+1. Go to **GitHub → Profile Picture → Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. Create token scoped to the `sabr` repository.
+3. Grant repository permission **Administration: Read and write**
+4. Copy the token value
+
+In `infra/hcp-terraform`, create a `secrets.auto.tfvars` file. In that file, paste `github_token = "<token>"`.
+
+### 4. Create the org and bootstrap workspace using local state
 
 The HCP Terraform org doesn't exist yet, so the cloud backend can't be used yet.
 
@@ -46,7 +58,7 @@ terraform apply \
 
 Terraform shows a `-target` warning. This is expected; the bootstrap flow is an exception to most terraform flows.
 
-### 4. Migrate state to HCP Terraform
+### 5. Migrate state to HCP Terraform
 
 While still in the `hcp-terraform` directory, run
 
@@ -60,7 +72,7 @@ Answer `yes` when prompted to move state. Then clean up local state files with
 rm terraform.tfstate terraform.tfstate.backup
 ```
 
-### 5. Connect the GitHub App
+### 6. Connect the GitHub App
 
 In the [HCP Terraform UI](https://app.terraform.io/login):
 
@@ -72,7 +84,7 @@ In the [HCP Terraform UI](https://app.terraform.io/login):
 
 You can also confirm the install succeeded by visiting https://github.com/settings/installations, which should now list "Terraform Cloud".
 
-### 6. Apply the rest of the terraform
+### 7. Apply the rest of the terraform
 
 ```bash
 terraform apply
