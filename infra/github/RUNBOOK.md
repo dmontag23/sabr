@@ -11,9 +11,9 @@ The workspace is created by the [HCP Terraform stack](/infra/hcp-terraform/sabr.
 - GitHub repository `sabr` exists.
 - GitHub App is installed on HCP Terraform (see the [runbook for HCP Terraform](/infra/hcp-terraform/RUNBOOK.md))
   - If App scope is **Only select repositories**, ensure `sabr` is selected.
-- A GitHub personal access token. Local terraform imports needs github_token available in your shell because sensitive HCP workspace variables are not injected into local Terraform runs.
+- A GitHub personal access token. Local terraform imports needs the `GITHUB_TOKEN` environment variable available in your shell because sensitive HCP workspace variables are not injected into local Terraform runs.
 
-If workspace, VCS connection, or `github_token` is broken, stop and run the [HCP Terraform runbook](/infra/hcp-terraform/RUNBOOK.md).
+If workspace, VCS connection, or `GITHUB_TOKEN` is broken, stop and run the [HCP Terraform runbook](/infra/hcp-terraform/RUNBOOK.md).
 
 ## Bootstrap
 
@@ -22,10 +22,10 @@ Import existing repository into state
 ```bash
 cd infra/github
 terraform init
-export TF_VAR_github_token="<your_github_token>"
+export GITHUB_TOKEN="<your_github_token>"
 terraform import github_repository.sabr sabr
 terraform apply
-unset TF_VAR_github_token
+unset GITHUB_TOKEN
 ```
 
 ---
@@ -54,10 +54,10 @@ Goal: rebuild in dependency order.
    ```bash
    cd infra/github
    terraform init
-   export TF_VAR_github_token="<your_github_token>"
+   export GITHUB_TOKEN="<your_github_token>"
    terraform import github_repository.sabr sabr
    terraform apply
-   unset TF_VAR_github_token
+   unset GITHUB_TOKEN
    ```
 
 ## Verification checklist after any DR
