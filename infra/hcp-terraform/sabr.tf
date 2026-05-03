@@ -25,9 +25,9 @@ variable "github_token" {
 }
 
 resource "tfe_variable" "github_token" {
-  key          = "GITHUB_TOKEN"
+  key          = "github_token"
   sensitive    = true
-  category     = "env"
+  category     = "terraform"
   workspace_id = tfe_workspace.github.id
   description  = "GitHub token with permission to manage the sabr repository."
 

@@ -3,8 +3,7 @@ terraform {
     organization = "sabs-apps"
 
     workspaces {
-      project = "sabr"
-      name    = "sabr-github"
+      name = "sabr-github"
     }
   }
 
