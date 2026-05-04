@@ -1,0 +1,34 @@
+# Adapted from https://supabase.com/docs/guides/deployment/managing-environments?queryGroups=environment&environment=ci
+name: Supabase Type Drift Check
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/supabase-types.check.yml
+      - app/src/types/database.types.ts
+      - supabase/**
+  workflow_dispatch:
+
+jobs:
+  type-drift:
+    name: Supabase type drift
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v2
+
+      - name: Start Supabase local development setup
+        run: supabase db start
+
+      - name: Verify generated types match Postgres schema
+        run: |
+          supabase gen types typescript --local > app/src/types/database.types.ts
+          if ! git diff --ignore-space-at-eol --exit-code --quiet app/src/types/database.types.ts; then
+            echo "Detected drift in app/src/types/database.types.ts. See status below:"
+            git diff
+            exit 1
+          fi
