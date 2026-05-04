@@ -46,7 +46,7 @@ Then, create a personal access token in Supabase:
 2. Generate a new token. The name does not matter. Keep the default 30 day expiry time.
 3. Copy the token value
 
-Paste that value in `secrets.auto.tfvars` as `sabr_supabase_prod_access_token = "<token>"`. Then get the organization id from the value after `org` in the supabase URL and paste that as `sabr_supabase_organization_id = <org id>`.
+Paste that value in `secrets.auto.tfvars` as `supabase_prod_access_token = "<token>"`. Then get the organization id from the value after `org` in the supabase URL and paste that as `supabase_organization_id = <org id>`.
 
 ### 4. Create the org and bootstrap workspace using local state
 

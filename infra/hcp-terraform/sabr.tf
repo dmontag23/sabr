@@ -34,7 +34,7 @@ resource "tfe_variable" "github_token" {
   value_wo_version = 1
 }
 
-resource "tfe_workspace" "sabr_supabase_prod" {
+resource "tfe_workspace" "supabase_prod" {
   name              = "sabr-supabase-prod"
   description       = "Production Supabase project for the sabr app."
   organization      = tfe_organization.sabs_apps.name
@@ -48,7 +48,7 @@ resource "tfe_workspace" "sabr_supabase_prod" {
   }
 }
 
-variable "sabr_supabase_organization_id" {
+variable "supabase_organization_id" {
   type = string
 }
 
@@ -57,30 +57,30 @@ resource "tfe_variable_set" "sabr_supabase_shared_variables" {
   name          = "sabr-supabase-shared-variables"
   description   = "Shared variables for the sabr Supabase workspaces"
   organization  = tfe_organization.sabs_apps.name
-  workspace_ids = [tfe_workspace.sabr_supabase_prod.id]
+  workspace_ids = [tfe_workspace.supabase_prod.id]
 }
 
-resource "tfe_variable" "sabr_supabase_organization_id" {
+resource "tfe_variable" "supabase_organization_id" {
   key             = "organization_id"
   category        = "terraform"
   variable_set_id = tfe_variable_set.sabr_supabase_shared_variables.id
   description     = "Supabase organization slug."
-  value           = var.sabr_supabase_organization_id
+  value           = var.supabase_organization_id
 }
 
-variable "sabr_supabase_prod_access_token" {
+variable "supabase_prod_access_token" {
   type      = string
   ephemeral = true
   sensitive = true
 }
 
-resource "tfe_variable" "sabr_supabase_prod_access_token" {
+resource "tfe_variable" "supabase_prod_access_token" {
   key          = "SUPABASE_ACCESS_TOKEN"
   sensitive    = true
   category     = "env"
-  workspace_id = tfe_workspace.sabr_supabase_prod.id
+  workspace_id = tfe_workspace.supabase_prod.id
   description  = "Production Supabase personal access token."
 
-  value_wo         = var.sabr_supabase_prod_access_token
+  value_wo         = var.supabase_prod_access_token
   value_wo_version = 1
 }
