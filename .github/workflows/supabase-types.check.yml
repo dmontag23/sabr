@@ -18,6 +18,8 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v6
 
+      - uses: ./.github/actions/setup-app
+
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v2
 
@@ -26,7 +28,7 @@ jobs:
 
       - name: Verify generated types match Postgres schema
         run: |
-          supabase gen types typescript --local > app/src/types/database.types.ts
+          pnpm --dir app supabase:type-gen
           if ! git diff --ignore-space-at-eol --exit-code --quiet app/src/types/database.types.ts; then
             echo "Detected drift in app/src/types/database.types.ts. See status below:"
             git diff

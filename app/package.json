@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "lint": "expo lint --max-warnings 0",
     "lint:fix": "expo lint --fix",
-    "supabase:type-gen": "supabase gen types typescript --local > src/types/database.types.ts",
+    "supabase:type-gen": "supabase gen types typescript --local > src/types/database.types.ts && eslint --fix src/types/database.types.ts",
     "test:unit": "jest",
     "test:e2e": "maestro test .maestro",
     "typecheck": "tsc",
