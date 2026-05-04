@@ -53,7 +53,7 @@ variable "supabase_organization_id" {
 }
 
 
-resource "tfe_variable_set" "sabr_supabase_shared_variables" {
+resource "tfe_variable_set" "supabase_shared_variables" {
   name          = "sabr-supabase-shared-variables"
   description   = "Shared variables for the sabr Supabase workspaces"
   organization  = tfe_organization.sabs_apps.name
@@ -63,7 +63,7 @@ resource "tfe_variable_set" "sabr_supabase_shared_variables" {
 resource "tfe_variable" "supabase_organization_id" {
   key             = "organization_id"
   category        = "terraform"
-  variable_set_id = tfe_variable_set.sabr_supabase_shared_variables.id
+  variable_set_id = tfe_variable_set.supabase_shared_variables.id
   description     = "Supabase organization slug."
   value           = var.supabase_organization_id
 }
