@@ -3,8 +3,7 @@ variable "organization_id" {
 }
 
 variable "project_name" {
-  type    = string
-  default = "sabr"
+  type = string
 }
 
 variable "project_region" {
