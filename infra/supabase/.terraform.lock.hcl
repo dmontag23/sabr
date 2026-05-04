@@ -6,6 +6,7 @@ provider "registry.terraform.io/hashicorp/random" {
   constraints = "~> 3.0"
   hashes = [
     "h1:Eexl06+6J+s75uD46+WnZtpJZYRVUMB0AiuPBifK6Jc=",
+    "h1:fdfOl1HabDT42XLH8qjmfTbVZpgQZ5lyOyOa+GQhm0w=",
     "h1:u8AKlWVDTH5r9YLSeswoVEjiY72Rt4/ch7U+61ZDkiQ=",
     "zh:08dd03b918c7b55713026037c5400c48af5b9f468f483463321bd18e17b907b4",
     "zh:0eee654a5542dc1d41920bbf2419032d6f0d5625b03bd81339e5b33394a3e0ae",
@@ -28,6 +29,7 @@ provider "registry.terraform.io/hashicorp/time" {
   hashes = [
     "h1:+W+DMrVoVnoXo3f3M4W+OpZbkCrUn6PnqDF33D2Cuf0=",
     "h1:ZT5ppCNIModqk3iOkVt5my8b8yBHmDpl663JtXAIRqM=",
+    "h1:eSX+RgYfeumojmeJ9Y5CbnkH2NkBC+9vUEolqdQVtGw=",
     "zh:02cb9aab1002f0f2a94a4f85acec8893297dc75915f7404c165983f720a54b74",
     "zh:04429b2b31a492d19e5ecf999b116d396dac0b24bba0d0fb19ecaefe193fdb8f",
     "zh:26f8e51bb7c275c404ba6028c1b530312066009194db721a8427a7bc5cdbc83a",
@@ -48,6 +50,7 @@ provider "registry.terraform.io/supabase/supabase" {
   constraints = "~> 1.0"
   hashes = [
     "h1:0MJbpRYSYfHppH7Q0ywDQ4CBX16HaubWRMVk2tVhYvI=",
+    "h1:HTHBz3TBkrn/GDwCElrbJw+C3AIZp5EacVG9qU0inaI=",
     "h1:ydHsmCRvxcXgIkh+Jl7hAoIepiqZRTPd0yPT3Eq2HiU=",
     "zh:062c135caea41f09cc969ada9117a952368f844697b8fad4a6fce9c432960077",
     "zh:0c7879a9af7b135ae6d18b1bf9614fcf86a3da235596d25ecc9222420477865f",
