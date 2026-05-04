@@ -46,7 +46,15 @@ Then, create a personal access token in Supabase:
 2. Generate a new token. The name does not matter. Keep the default 30 day expiry time.
 3. Copy the token value
 
-Paste that value in `secrets.auto.tfvars` as `supabase_access_token = "<token>"`. Then get the organization id from the value after `org` in the supabase URL and paste that as `supabase_organization_id = <org id>`.
+Paste that value in `secrets.auto.tfvars` as:
+
+```hcl
+supabase_access_token    = "<token>"
+supabase_organization_id = "<org_id>"
+```
+
+`supabase_access_token` is shared by all sabr Supabase workspaces.
+`supabase_organization_id` is the organization id from Supabase.
 
 ### 4. Create the org and bootstrap workspace using local state
 
@@ -99,3 +107,20 @@ terraform apply
 ```
 
 The `tfe_github_app_installation` data source will now resolve and all remaining resources create cleanly.
+
+### 8. Verify Supabase environment workspaces and variables
+
+After `terraform apply`, confirm these HCP Terraform workspaces exist:
+
+- `sabr-supabase-staging`
+- `sabr-supabase-prod`
+
+Both should receive the following shared variables from `sabr-supabase-shared-variables`:
+
+- `organization_id`
+- `SUPABASE_ACCESS_TOKEN`
+
+Each workspace should also have its own `project_name` Terraform variable:
+
+- staging: `sabr-staging`
+- prod: `sabr-prod`

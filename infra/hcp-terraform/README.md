@@ -34,6 +34,10 @@ When rotating GitHub or Supabase tokens, update `secrets.auto.tfvars` and increm
 
 See the [runbook](./RUNBOOK.md).
 
+## Token rotation note
+
+When rotating the Supabase access token, update `supabase_access_token` in `secrets.auto.tfvars` and increment `value_wo_version` for `tfe_variable.supabase_access_token` in [sabr.tf](./sabr.tf) before running `terraform apply`.
+
 # TODO
 
 The configuration here is for all of sabs-apps, not just sabr. It should live in a separate repo.

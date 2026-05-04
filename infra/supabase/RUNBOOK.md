@@ -26,16 +26,21 @@ export SUPABASE_ACCESS_TOKEN="<token>"
 
 ### 2. Set required Terraform variables
 
-Set the organization id:
+Set the required variables:
 
 ```bash
 export TF_VAR_organization_id="<supabase-org-id>"
+export TF_VAR_project_name="<project-name>"
 ```
 
-You can set the following variables if you want to override the default values (shown below):
+Use:
+
+- staging workspace: `TF_VAR_project_name="sabr-staging"`
+- production workspace: `TF_VAR_project_name="sabr-prod"`
+
+`project_region` is optional and defaults to `us-west-2`. Override only if needed:
 
 ```bash
-export TF_VAR_project_name="sabr"
 export TF_VAR_project_region="us-west-2"
 ```
 
