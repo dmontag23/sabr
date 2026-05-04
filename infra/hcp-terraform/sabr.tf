@@ -88,9 +88,13 @@ variable "supabase_access_token" {
   sensitive = true
 }
 
+variable "production_required_reviewer_username" {
+  type = string
+}
+
 resource "tfe_variable_set" "supabase_shared_variables" {
   name          = "sabr-supabase-shared-variables"
-  description   = "Shared variables for the sabr Supabase workspaces"
+  description   = "Shared variables for the sabr Supabase workspaces."
   organization  = tfe_organization.sabs_apps.name
   workspace_ids = [tfe_workspace.supabase_staging.id, tfe_workspace.supabase_prod.id]
 }
@@ -104,7 +108,7 @@ resource "tfe_variable" "supabase_organization_id" {
   value = var.supabase_organization_id
 }
 
-resource "tfe_variable" "supabase_access_token" {
+resource "tfe_variable" "supabase_access_token_variable_set" {
   key             = "SUPABASE_ACCESS_TOKEN"
   category        = "env"
   sensitive       = true
@@ -113,4 +117,44 @@ resource "tfe_variable" "supabase_access_token" {
 
   value_wo         = var.supabase_access_token
   value_wo_version = 1
+}
+
+resource "tfe_variable" "supabase_access_token_github" {
+  key          = "supabase_access_token"
+  category     = "terraform"
+  sensitive    = true
+  workspace_id = tfe_workspace.github.id
+  description  = "Supabase access token."
+
+  value_wo         = var.supabase_access_token
+  value_wo_version = 1
+}
+
+resource "tfe_variable" "production_required_reviewer_username" {
+  key          = "production_required_reviewer_username"
+  category     = "terraform"
+  workspace_id = tfe_workspace.github.id
+  description  = "Required production deployment approver username."
+
+  value = var.production_required_reviewer_username
+}
+
+resource "tfe_workspace_settings" "supabase_staging_remote_state_sharing" {
+  workspace_id              = tfe_workspace.supabase_staging.id
+  remote_state_consumer_ids = [tfe_workspace.github.id]
+}
+
+resource "tfe_workspace_settings" "supabase_prod_remote_state_sharing" {
+  workspace_id              = tfe_workspace.supabase_prod.id
+  remote_state_consumer_ids = [tfe_workspace.github.id]
+}
+
+resource "tfe_run_trigger" "supabase_staging_triggers_github" {
+  workspace_id  = tfe_workspace.github.id
+  sourceable_id = tfe_workspace.supabase_staging.id
+}
+
+resource "tfe_run_trigger" "supabase_prod_triggers_github" {
+  workspace_id  = tfe_workspace.github.id
+  sourceable_id = tfe_workspace.supabase_prod.id
 }
