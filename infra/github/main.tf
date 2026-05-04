@@ -75,10 +75,9 @@ resource "github_repository_environment_deployment_policy" "staging_develop" {
 }
 
 resource "github_repository_environment" "production" {
-  repository          = github_repository.sabr.name
-  environment         = "production"
-  prevent_self_review = true
-  can_admins_bypass   = true
+  repository        = github_repository.sabr.name
+  environment       = "production"
+  can_admins_bypass = true
 
   reviewers {
     users = [data.github_user.production_reviewer.id]
