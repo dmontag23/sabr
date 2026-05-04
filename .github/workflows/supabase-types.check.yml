@@ -7,6 +7,13 @@ on:
       - .github/workflows/supabase-types.check.yml
       - app/src/types/database.types.ts
       - supabase/**
+  push:
+    paths:
+      - .github/workflows/supabase-types.check.yml
+      - app/src/types/database.types.ts
+      - supabase/**
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
