@@ -4,7 +4,7 @@ resource "github_repository" "sabr" {
   delete_branch_on_merge = true
 }
 
-resource "github_repository_ruleset" "default_branch_protection" {
+resource "github_repository_ruleset" "sabr_default_branch_protection" {
   name        = "default-branch-protection"
   repository  = github_repository.sabr.name
   target      = "branch"
