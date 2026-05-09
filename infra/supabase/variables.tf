@@ -1,12 +1,15 @@
 variable "organization_id" {
-  type = string
+  description = "Supabase organization id."
+  type        = string
 }
 
 variable "project_name" {
-  type = string
+  description = "Supabase project name."
+  type        = string
 }
 
 variable "project_region" {
-  type    = string
-  default = "eu-west-2"
+  description = "Supabase project region."
+  type        = string
+  default     = "eu-west-2"
 }

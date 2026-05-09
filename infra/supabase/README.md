@@ -1,11 +1,14 @@
 # Supabase
 
-Manages the Supabase project for the `sabr` app.
+Manages the Supabase projects for the `sabr` app.
 
-## What this module manages
+## What this stack manages
 
-- Supabase project creation via `supabase_project.sabr`
-- Database password generation and rotation every 30 days
+- Supabase project via (`supabase_project.sabr`)
+- Database password generation and rotation (default 30 days)
+- Outputs consumed by `infra/github`:
+  - `project_id`
+  - `database_password` (sensitive)
 
 ## Required inputs
 
@@ -14,7 +17,7 @@ Manages the Supabase project for the `sabr` app.
 
 Optional:
 
-- `project_region` (default: `us-west-2`)
+- `project_region` (default: `eu-west-2`)
 
 ## Before you run Terraform
 
@@ -26,10 +29,24 @@ export TF_VAR_organization_id="<your-supabase-org-id>"
 export TF_VAR_project_name="sabr-<environment name>"
 ```
 
-`TF_VAR_organization_id` is the `org_...` value from your Supabase org URL/settings.
-Use `sabr-staging` or `sabr-prod` as the project name for this repository's managed environments.
+`TF_VAR_organization_id` is the `org_...` value from the Supabase organization in the URL (also in the settings).
+
+In HCP Terraform, this same root configuration is used by two workspaces:
+
+- `sabr-supabase-staging`
+- `sabr-supabase-production`
+
+Environment differences are provided via workspace variables.
 
 ## Day-to-day usage
+
+For local CLI runs, select the target remote workspace first:
+
+```bash
+terraform workspace select sabr-supabase-staging
+# or
+terraform workspace select sabr-supabase-production
+```
 
 ```bash
 cd infra/supabase

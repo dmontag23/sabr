@@ -1,43 +1,61 @@
-# Hashicorp Cloud Platform (HCP) Terraform
+# HashiCorp Cloud Platform (HCP) Terraform
 
-Manages HCP Terraform itself: the org, projects, workspaces, etc.
+Manages the Terraform Cloud (HCP Terraform) workspaces: the `sabs-apps` organization resources, the `sabr` project, and all workspaces used by that project.
 
-## What this module manages
+## What this stack manages
 
-- The HCP Terraform organization
-- The `bootstrap` workspace (this code's own state lives here)
-- The `sabr` project for the `sabr` app.
-- The `sabr-github` workspace for [GitHub infrastructure](/infra/github/)
-- The `sabr-supabase-*` workspaces for [Supabase infrastructure](/infra/supabase/)
+- HCP Terraform organization (`sabs-apps`)
+- Bootstrap workspace (`bootstrap`) where this stack stores state
+- The `sabr` project
+- The `sabr-github` workspace for [/infra/github](/infra/github/)
+- The `sabr-supabase-staging` and `sabr-supabase-production` workspaces for [/infra/supabase](/infra/supabase/)
+- Shared variable set for Supabase workspaces
+- Cross-workspace run triggers (Supabase -> GitHub)
+
+## File structure
+
+- `bootstrap.tf`: organization + bootstrap workspace
+- `locals.tf`: constants for necessary `sabr` environments and the `sabr` repo
+- `organization_tokens.tf`: org token for `sabs-apps`
+- `outputs.tf`: canonical environment names and Supabase workspace names
+- `projects.tf`: project definitions
+- `run_triggers.tf`: Supabase to GitHub run triggers
+- `tfe_variable_sets.tf`: workspace variables and shared Supabase variable set
+- `variables.tf`: inputs to this stack
+- `workspaces.tf`: GitHub and Supabase workspace definitions
 
 ## Execution model
 
-This stack runs in **local execution mode**: plan and apply happen on your laptop, state is stored in HCP Terraform. There is no PR-driven plan or merge-driven apply for this repo. Changes go through PR review, and someone runs `terraform apply` after merge.
+This stack intentionally uses **local execution mode** to manage the `bootstrap` workspace. You should plan & apply by running `terraform plan`/`terraform apply` locally. The state will remain in HCP Terraform (in the `bootstrap` workspace).
 
-This is intentional; remote execution requires a user token to manage GitHub App VCS connections. Setting a user token (e.g. as a variable in the `bootstrap` workspace) would break remote execution if said token is no longer able to be used.
-
-Workspace variables for downstream workspaces can be managed here using `tfe_variable`. This includes environment variables (for example `GITHUB_TOKEN` and `SUPABASE_ACCESS_TOKEN`) and Terraform variables (for example `organization_id`).
+This is because workspace VCS connections rely on auth-ing to GitHub App via a user token, which is brittle to store, so local execution (which already needs a user) avoids having to store such a token in HCP Terraform.
 
 ## Day-to-day usage
 
 ```bash
 cd infra/hcp-terraform
-
 terraform init
 terraform plan
 terraform apply
 ```
 
-When rotating GitHub or Supabase tokens, update `secrets.auto.tfvars` and increment `value_wo_version` for the corresponding `tfe_variable` resources in [sabr.tf](./sabr.tf) before running `terraform apply` (see the [runbook](./RUNBOOK.md) for more information).
+## Apply order
+
+When changes span multiple stacks, the stacks should be applied in this order:
+
+1. `infra/hcp-terraform`
+2. `infra/supabase`
+3. `infra/github`
+
+## Token rotation
+
+To rotate any secret tokens, create or update `secrets.auto.tfvars` in [/infra/hcp-terraform](/infra/hcp-terraform/), then increment `value_wo_version` on the relevant variables before applying. The secret variables are:
+
+- `tfe_variable.github_token`
+- `tfe_variable.tfe_token`
+- `tfe_variable.supabase_access_token_terraform`
+- `tfe_variable.supabase_access_token_env`
 
 ## First-time setup or disaster recovery
 
-See the [runbook](./RUNBOOK.md).
-
-## Token rotation note
-
-When rotating the Supabase access token, update `supabase_access_token` in `secrets.auto.tfvars` and increment `value_wo_version` for `tfe_variable.supabase_access_token` in [sabr.tf](./sabr.tf) before running `terraform apply`.
-
-# TODO
-
-The configuration here is for all of sabs-apps, not just sabr. It should live in a separate repo.
+See [RUNBOOK.md](./RUNBOOK.md).

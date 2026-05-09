@@ -1,23 +1,30 @@
 # HCP Terraform — Runbook
 
-Sets up HCP Terraform from scratch. The same procedure handles disaster recovery.
+Sets up or recovers the HCP Terraform stack in `infra/hcp-terraform`.
 
-The procedure has three phases: (1) create the org and bootstrap workspace against local state, (2) install the GitHub App via the UI, (3) apply the rest of the state.
+The procedure has three phases:
+
+1. Create org & bootstrap workspace in local state.
+2. Connect GitHub App via the HCP Terraform UI.
+3. Apply the rest of the state in HCP Terraform.
 
 ## Prerequisites
 
 - [Terraform CLI installed locally](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 - [HCP Terraform account](https://app.terraform.io/login)
-- The `sabr` GitHub repository exists because the `sabr-github` workspace is VCS-connected to that repo. Create it if it does not exist.
-- A GitHub fine-grained personal access token (PAT) for the `sabr` repo with **Administration: Read and write** permission.
+- The `sabr` GitHub repository exists (this is needed because the `sabr-github` workspace connects to it via VCS).
+- A GitHub personal access token (PAT) for the `sabr` repo with:
+  - **Administration: Read and write**
+  - **Secrets: Read and write**
+  - **Environments: Read and write**
 
 ## Steps
 
-### 1. Create the HCP Terraform account
+### 1) Create the HCP Terraform account
 
 Sign up at https://app.terraform.io and verify the email used. Do not create an organization - terraform will do that for you.
 
-### 2. Authenticate the CLI
+### 2) Authenticate the CLI
 
 Run
 
@@ -25,20 +32,27 @@ Run
 terraform login
 ```
 
-to create a user token in the HCP Terraform account. This token will be used to apply all the [HCP Terraform resources](/infra/hcp-terraform).
+to create a user token in the HCP Terraform account. This token is used by the Terraform CLI for this stack.
 
 Follow the browser prompts. This puts an API token in `~/.terraform.d/credentials.tfrc.json`.
 
-### 3 Create provider tokens and local vars file
+### 3) Create provider tokens and local vars file
 
 First, create a fine-grained personal access token (PAT) in GitHub:
 
 1. Go to **Profile Picture → Settings → Developer settings → Personal access tokens → Fine-grained tokens**
 2. Create token scoped to the `sabr` repository.
-3. Grant repository permission **Administration: Read and write**
+3. Grant repository permissions:
+   - **Administration: Read and write**
+   - **Secrets: Read and write**
+   - **Environments: Read and write**
 4. Copy the token value
 
-In `infra/hcp-terraform`, create a `secrets.auto.tfvars` file. In that file, paste `github_token = "<token>"`.
+In `infra/hcp-terraform`, create a `secrets.auto.tfvars` file. In that file, paste:
+
+```hcl
+github_token = "<your github token>"
+```
 
 Then, create a personal access token in Supabase:
 
@@ -46,17 +60,18 @@ Then, create a personal access token in Supabase:
 2. Generate a new token. The name does not matter. Keep the default 30 day expiry time.
 3. Copy the token value
 
-Paste that value in `secrets.auto.tfvars` as:
+Paste that value, as well as the GitHub user needed to approve production deployments, into `secrets.auto.tfvars` as:
 
 ```hcl
 supabase_access_token    = "<token>"
 supabase_organization_id = "<org_id>"
+production_required_reviewer_username = "<github prod approver username>"
 ```
 
-`supabase_access_token` is shared by all sabr Supabase workspaces.
-`supabase_organization_id` is the organization id from Supabase.
+`supabase_access_token` is shared by all Supabase workspaces and passed to the GitHub stack.
+`supabase_organization_id` is the Supabase `org_...` id.
 
-### 4. Create the org and bootstrap workspace using local state
+### 4) Create org & bootstrap workspace in local state
 
 The HCP Terraform org doesn't exist yet, so the cloud backend can't be used yet.
 
@@ -74,7 +89,7 @@ terraform apply \
 
 Terraform shows a `-target` warning. This is expected; the bootstrap flow is an exception to most terraform flows.
 
-### 5. Migrate state to HCP Terraform
+### 5) Migrate state to HCP Terraform
 
 While still in the `hcp-terraform` directory, run
 
@@ -88,7 +103,7 @@ Answer `yes` when prompted to move state. Then clean up local state files with
 rm terraform.tfstate terraform.tfstate.backup
 ```
 
-### 6. Connect the GitHub App
+### 6) Connect the GitHub App
 
 In the [HCP Terraform UI](https://app.terraform.io/login):
 
@@ -100,27 +115,45 @@ In the [HCP Terraform UI](https://app.terraform.io/login):
 
 You can also confirm the install succeeded by visiting https://github.com/settings/installations, which should now list "Terraform Cloud".
 
-### 7. Apply the rest of the terraform
+### 7) Apply the rest of the terraform stack
 
 ```bash
 terraform apply
 ```
 
 The `tfe_github_app_installation` data source will now resolve and all remaining resources create cleanly.
+The apply generates an organization token for `sabs-apps` and injects it into `sabr-github` as the `TFE_TOKEN ` value.
 
-### 8. Verify Supabase environment workspaces and variables
+### 8) Verify created workspaces
 
 After `terraform apply`, confirm these HCP Terraform workspaces exist:
 
+- `bootstrap`
+- `sabr-github`
 - `sabr-supabase-staging`
-- `sabr-supabase-prod`
+- `sabr-supabase-production`
 
-Both should receive the following shared variables from `sabr-supabase-shared-variables`:
+Both Supabase workspaces should receive the following shared variables from `sabr-supabase-shared-variables`:
 
 - `organization_id`
 - `SUPABASE_ACCESS_TOKEN`
 
-Each workspace should also have its own `project_name` Terraform variable:
+Each Supabase workspace should also have its own `project_name` Terraform variable:
 
 - staging: `sabr-staging`
-- prod: `sabr-prod`
+- production: `sabr-production`
+
+`sabr-github` should contain:
+
+- the `GITHUB_TOKEN` environment variable
+- the `TFE_TOKEN` environment variable
+- the `supabase_access_token` terraform variable
+- the `production_required_reviewer_username` terraform variable
+
+Verify that run triggers exist from both Supabase workspaces to `sabr-github`.
+
+## Disaster recovery notes
+
+- After HCP recovery, re-run `terraform apply` in the following directories in this order:
+  1. [infra/supabase](/infra/supabase/)
+  2. [infra/github](/infra/github/)

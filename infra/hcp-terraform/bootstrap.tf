@@ -5,7 +5,7 @@ resource "tfe_organization" "sabs_apps" {
 
 resource "tfe_workspace" "bootstrap" {
   name         = "bootstrap"
-  description  = "Manages the organization and other workspaces."
+  description  = "Manages the sabs-apps organization and its workspaces."
   organization = tfe_organization.sabs_apps.name
 
   lifecycle {
@@ -25,8 +25,4 @@ resource "tfe_workspace_settings" "bootstrap" {
   # flow with the least amount of friction. This also limits the blast radius of applying changes to HCP Terraform,
   # which controls all other infra state.
   execution_mode = "local"
-}
-
-data "tfe_github_app_installation" "gha_installation" {
-  name = "dmontag23"
 }
