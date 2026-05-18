@@ -24,8 +24,6 @@ resource "github_repository_ruleset" "sabr_default_branch_protection" {
   }
 
   rules {
-    required_linear_history = true
-
     pull_request {
       required_approving_review_count   = 1
       dismiss_stale_reviews_on_push     = true
