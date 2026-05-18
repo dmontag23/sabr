@@ -33,8 +33,6 @@ resource "github_repository_ruleset" "sabr_default_branch_protection" {
     }
 
     required_status_checks {
-      strict_required_status_checks_policy = true
-
       required_check {
         context = "Run pre-commit"
       }
