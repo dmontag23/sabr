@@ -6,6 +6,7 @@ provider "registry.terraform.io/y0n0zawa/resend" {
   constraints = "~> 1.0"
   hashes = [
     "h1:8GC9Zkjdl6YTS0FD8b71acfssKGdiMVh9+do57Pgkhc=",
+    "h1:h4bOpVBKm2n5Wag7PYWh0+8hbHfOPxntLBuQUFrChaI=",
     "zh:1101ddd666daa7f33c18ee45e72f6c85c56b339a1ea905d45c89eb0cd2227c6c",
     "zh:15c8dd2ca04389f66a5f7a61b362f45a94fc035f269db5bdd676f979839493ac",
     "zh:25412121f5637c976c852271b2b44e04c6b16f4fe0f7579ed87c970891161f0e",
