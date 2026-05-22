@@ -9,8 +9,10 @@ Bootstraps or recovers the Supabase Terraform stack in `infra/supabase`.
 - Supabase organization id (`org_...`) where the project should be managed
 - Access to [HCP Terraform](https://app.terraform.io/login) org `sabs-apps` (state is stored there)
 - The following HCP Terraform workspaces already exist (from [infra/hcp-terraform](/infra/hcp-terraform/)):
+  - `sabr-resend`
   - `sabr-supabase-staging`
   - `sabr-supabase-production`
+- `sabr-resend` has had at least one successful apply so `supabase_smtp_api_key` is available to this stack via `tfe_outputs`
 
 ## Steps
 
@@ -57,6 +59,8 @@ terraform workspace select sabr-supabase-staging
 terraform plan
 terraform apply
 ```
+
+If you see an error related to missing `tfe_outputs.resend` values, run `terraform apply` in [infra/resend](/infra/resend/) first, then retry.
 
 ## Notes
 

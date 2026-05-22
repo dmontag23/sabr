@@ -6,6 +6,7 @@ Manages the Supabase projects for the `sabr` app.
 
 - Supabase project via (`supabase_project.sabr`)
 - Database password generation and rotation (default 30 days)
+- Supabase auth email settings, including SMTP configuration
 - Outputs consumed by `infra/github`:
   - `project_id`
   - `database_password` (sensitive)
@@ -37,6 +38,8 @@ In HCP Terraform, this same root configuration is used by two workspaces:
 - `sabr-supabase-production`
 
 Environment differences are provided via workspace variables.
+
+This stack also reads `supabase_smtp_api_key` from the `sabr-resend` workspace (`data.tfe_outputs.resend`), so [infra/resend](/infra/resend) must have completed at least one successful apply before the first apply of this stack.
 
 ## Day-to-day usage
 
