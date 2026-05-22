@@ -58,13 +58,20 @@ Then, create a personal access token in Supabase:
 
 1. Go **Dashboard → Account preferences → Access Tokens**
 2. Generate a new token. The name does not matter. Keep the default 30 day expiry time.
-3. Copy the token value
+3. Copy the token value for pasting into `secrets.auto.tfvars` (see below).
 
-Paste that value, as well as the GitHub user needed to approve production deployments, into `secrets.auto.tfvars` as:
+Next, create an API key in Resend:
+
+1. Go to **API keys** in the Resend navbar.
+2. Create an API key with **Full access** permissions. The name does not matter and leave the Domain field blank.
+3. Copy the key value for pasting into `secrets.auto.tfvars` (see below).
+
+In `secrets.auto.tfvars`, paste the values as:
 
 ```hcl
 supabase_access_token    = "<token>"
 supabase_organization_id = "<org_id>"
+resend_api_key           = "<resend api key>"
 production_required_reviewer_username = "<github prod approver username>"
 ```
 
@@ -122,7 +129,10 @@ terraform apply
 ```
 
 The `tfe_github_app_installation` data source will now resolve and all remaining resources create cleanly.
-The apply generates an organization token for `sabs-apps` and injects it into `sabr-github` as the `TFE_TOKEN ` value.
+The apply generates an organization token for `sabs-apps` and injects it as:
+
+- `TFE_TOKEN` in `sabr-github`
+- `TFE_TOKEN` in the Supabase shared variable set (`sabr-supabase-shared-variables`)
 
 ### 8) Verify created workspaces
 
@@ -130,6 +140,7 @@ After `terraform apply`, confirm these HCP Terraform workspaces exist:
 
 - `bootstrap`
 - `sabr-github`
+- `sabr-resend`
 - `sabr-supabase-staging`
 - `sabr-supabase-production`
 
@@ -137,6 +148,7 @@ Both Supabase workspaces should receive the following shared variables from `sab
 
 - `organization_id`
 - `SUPABASE_ACCESS_TOKEN`
+- `TFE_TOKEN`
 
 Each Supabase workspace should also have its own `project_name` Terraform variable:
 
@@ -150,10 +162,18 @@ Each Supabase workspace should also have its own `project_name` Terraform variab
 - the `supabase_access_token` terraform variable
 - the `production_required_reviewer_username` terraform variable
 
-Verify that run triggers exist from both Supabase workspaces to `sabr-github`.
+`sabr-resend` should contain:
+
+- the `RESEND_API_KEY` environment variable
+
+Verify that the following run triggers exist:
+
+- from `sabr-resend` to both Supabase workspaces
+- from both Supabase workspaces to `sabr-github`
 
 ## Disaster recovery notes
 
 - After HCP recovery, re-run `terraform apply` in the following directories in this order:
-  1. [infra/supabase](/infra/supabase/)
-  2. [infra/github](/infra/github/)
+  1. [infra/resend](/infra/resend/)
+  2. [infra/supabase](/infra/supabase/)
+  3. [infra/github](/infra/github/)

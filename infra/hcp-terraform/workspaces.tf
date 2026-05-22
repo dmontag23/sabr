@@ -16,6 +16,20 @@ resource "tfe_workspace" "github" {
   }
 }
 
+resource "tfe_workspace" "resend" {
+  name              = "sabr-resend"
+  description       = "Resend email service for the sabr app."
+  organization      = tfe_organization.sabs_apps.name
+  project_id        = tfe_project.sabr.id
+  working_directory = "infra/resend"
+  trigger_patterns  = ["infra/resend/**/*"]
+
+  vcs_repo {
+    identifier                 = local.repository_identifier
+    github_app_installation_id = data.tfe_github_app_installation.gha_installation.id
+  }
+}
+
 resource "tfe_workspace" "supabase" {
   for_each = local.environments
 

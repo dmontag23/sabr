@@ -10,7 +10,7 @@ resource "tfe_variable" "github_token" {
   value_wo_version = 1
 }
 
-resource "tfe_variable" "tfe_token" {
+resource "tfe_variable" "github_tfe_token" {
   key          = "TFE_TOKEN"
   sensitive    = true
   category     = "env"
@@ -41,6 +41,18 @@ resource "tfe_variable" "supabase_access_token_terraform" {
   value_wo_version = 1
 }
 
+# Variables for the Resend workspace
+resource "tfe_variable" "resend_api_key" {
+  key          = "RESEND_API_KEY"
+  sensitive    = true
+  category     = "env"
+  workspace_id = tfe_workspace.resend.id
+  description  = "Resend API key with full access permissions."
+
+  value_wo         = var.resend_api_key
+  value_wo_version = 1
+}
+
 # Variables for the Supabase workspaces
 resource "tfe_variable_set" "supabase_shared_variables" {
   name          = "sabr-supabase-shared-variables"
@@ -57,6 +69,17 @@ resource "tfe_variable" "supabase_access_token_env" {
   description     = "Supabase access token."
 
   value_wo         = var.supabase_access_token
+  value_wo_version = 1
+}
+
+resource "tfe_variable" "supabase_tfe_token" {
+  key             = "TFE_TOKEN"
+  sensitive       = true
+  category        = "env"
+  variable_set_id = tfe_variable_set.supabase_shared_variables.id
+  description     = "HCP Terraform organization token."
+
+  value_wo         = tfe_organization_token.sabs_apps.token
   value_wo_version = 1
 }
 
