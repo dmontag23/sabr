@@ -1,1 +1,3 @@
 provider "supabase" {}
+
+provider "tfe" {}
