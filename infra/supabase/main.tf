@@ -23,9 +23,6 @@ resource "supabase_settings" "sabr" {
   auth = jsonencode({
     external_email_enabled = true
 
-    mailer_subjects_magic_link          = "Log into Sabr"
-    mailer_templates_magic_link_content = file("${path.module}/../../supabase/templates/magic_link.html")
-
     smtp_host = "smtp.resend.com"
     smtp_pass = data.tfe_outputs.resend.values["supabase_smtp_api_key"]
     smtp_port = 465
