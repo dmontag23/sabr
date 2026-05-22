@@ -23,9 +23,10 @@ resource "supabase_settings" "sabr" {
   auth = jsonencode({
     external_email_enabled = true
 
+    # TODO: Ideally, it would be great to get these values from the Resend provider.
     smtp_host = "smtp.resend.com"
     smtp_pass = data.tfe_outputs.resend.values["supabase_smtp_api_key"]
-    smtp_port = 465
+    smtp_port = "465"
     smtp_user = "resend"
   })
 }
