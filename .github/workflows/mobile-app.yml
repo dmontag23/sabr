@@ -133,7 +133,5 @@ jobs:
           working-directory: app
           script: |
             adb install "android/app/build/outputs/apk/release/app-release.apk"
-            if ! pnpm test:e2e; then
-              adb logcat -d | rg -i "FATAL EXCEPTION|AndroidRuntime|ReactNativeJS|app.sabr"
-              exit 1
-            fi
+            adb logcat -c
+            pnpm test:e2e || { status=$?; echo "Maestro failed - dumping focused Android logs"; if adb logcat -d -v brief | sed -n '/FATAL EXCEPTION\|AndroidRuntime\|ReactNativeJS\|app\.sabr/Ip' | head -n 200 | sed '/^[[:space:]]*$/d'; then :; fi; adb logcat -d -v brief -t 200; exit $status; }
