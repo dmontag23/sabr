@@ -133,4 +133,7 @@ jobs:
           working-directory: app
           script: |
             adb install "android/app/build/outputs/apk/release/app-release.apk"
-            pnpm test:e2e
+            if ! pnpm test:e2e; then
+              adb logcat -d | rg -i "FATAL EXCEPTION|AndroidRuntime|ReactNativeJS|app.sabr"
+              exit 1
+            fi
