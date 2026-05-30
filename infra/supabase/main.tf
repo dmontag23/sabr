@@ -24,11 +24,15 @@ resource "supabase_settings" "sabr" {
     external_email_enabled = true
     rate_limit_email_sent  = 300
 
+    mailer_autoconfirm                  = true
+    mailer_subjects_magic_link          = "Log into Sabr"
+    mailer_templates_magic_link_content = file("${path.module}/../../supabase/templates/magic_link.html")
+
     # TODO: Ideally, it would be great to get these values from the Resend provider.
     smtp_admin_email = "onboarding@resend.dev"
     smtp_host        = "smtp.resend.com"
     smtp_pass        = data.tfe_outputs.resend.values["supabase_smtp_api_key"]
-    smtp_port        = "465"
+    smtp_port        = "587"
     smtp_sender_name = "Sabr"
     smtp_user        = "resend"
   })
