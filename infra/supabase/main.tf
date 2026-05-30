@@ -22,6 +22,7 @@ resource "supabase_settings" "sabr" {
 
   auth = jsonencode({
     external_email_enabled = true
+    rate_limit_email_sent  = 300
 
     # TODO: Ideally, it would be great to get these values from the Resend provider.
     smtp_admin_email = "onboarding@resend.dev"
