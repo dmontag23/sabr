@@ -29,7 +29,7 @@ resource "supabase_settings" "sabr" {
     mailer_templates_magic_link_content = file("${path.module}/../../supabase/templates/magic_link.html")
 
     # TODO: Ideally, it would be great to get these values from the Resend provider.
-    smtp_admin_email = "onboarding@resend.dev"
+    smtp_admin_email = "login@notifications.unlikely.ai"
     smtp_host        = "smtp.resend.com"
     smtp_pass        = data.tfe_outputs.resend.values["supabase_smtp_api_key"]
     smtp_port        = "587"
