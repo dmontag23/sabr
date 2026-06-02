@@ -12,10 +12,10 @@ on:
 
 jobs:
   deploy:
-    name: Deploy migrations to ${{ github.ref_name == 'main' && 'production' || 'staging' }}
-    if: github.ref_name == 'main' || github.ref_name == 'develop'
+    name: Deploy migrations to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
