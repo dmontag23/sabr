@@ -38,7 +38,7 @@ resource "tfe_variable" "supabase_access_token_terraform" {
   description  = "Supabase access token."
 
   value_wo         = var.supabase_access_token
-  value_wo_version = 1
+  value_wo_version = 2
 }
 
 # Variables for the Resend workspace
@@ -69,7 +69,7 @@ resource "tfe_variable" "supabase_access_token_env" {
   description     = "Supabase access token."
 
   value_wo         = var.supabase_access_token
-  value_wo_version = 1
+  value_wo_version = 2
 }
 
 resource "tfe_variable" "supabase_tfe_token" {
