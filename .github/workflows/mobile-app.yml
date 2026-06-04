@@ -40,14 +40,62 @@ jobs:
       - name: Unit test
         run: pnpm test:unit
 
+  resolve-environment:
+    name: Resolve environment
+    runs-on: ubuntu-latest
+    outputs:
+      ENVIRONMENT: ${{ steps.resolve-environment.outputs.ENVIRONMENT }}
+      MAIL_PROVIDER: ${{ steps.resolve-environment.outputs.MAIL_PROVIDER }}
+    steps:
+      - id: resolve-environment
+        run:
+          | # When merging to the "develop" branch, or when opening a pull request from "develop" to "main", run e2e tests on staging. Otherwise, run using a local supabase instance.
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/develop" ]] \
+            || [[ "${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "main" ]]; then
+            echo "ENVIRONMENT=staging" >> "$GITHUB_OUTPUT"
+            echo "MAIL_PROVIDER=resend"  >> "$GITHUB_OUTPUT"
+          else
+            echo "ENVIRONMENT="         >> "$GITHUB_OUTPUT"
+            echo "MAIL_PROVIDER=mailpit" >> "$GITHUB_OUTPUT"
+          fi
+
   e2e_tests_ios:
     name: E2E tests - IOS 📱
-    runs-on: macos-26
+    # TODO: Run on a macos-26+ runner when Docker is supported.
+    # See https://github.com/actions/runner-images/issues/13505
+    runs-on: macos-26-intel
+    needs: resolve-environment
+    environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
+    env:
+      MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAIL_PROVIDER }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-app
+
+      # TODO: Remove this step once macos-26+ runners support Docker.
+      # See https://github.com/actions/runner-images/issues/13505
+      - name: Setup Docker Desktop
+        uses: gh-workflow/setup-docker-desktop-macos@0.0.12
+
+      - name: Set up Supabase CLI
+        if: env.MAIL_PROVIDER == 'mailpit'
+        uses: supabase/setup-cli@v2
+
+      - name: Start local Supabase instance
+        if: env.MAIL_PROVIDER == 'mailpit'
+        run: |
+          supabase start
+          eval "$(supabase status -o env)"
+          echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+          echo "MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       - name: Generate native iOS project
         run: pnpm expo prebuild --platform ios
@@ -74,11 +122,6 @@ jobs:
       - name: Install app onto simulator
         run: xcrun simctl install booted ios/build/Build/Products/Release-iphonesimulator/sabr.app
 
-      - name: Install Maestro
-        run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
-
       - name: Run Maestro
         env:
           MAESTRO_CLI_NO_ANALYTICS: true
@@ -88,11 +131,33 @@ jobs:
   e2e_tests_android:
     name: E2E tests - Android 🤖
     runs-on: ubuntu-latest
+    needs: resolve-environment
+    environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
+    env:
+      MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAIL_PROVIDER }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-app
+
+      - name: Set up Supabase CLI
+        if: env.MAIL_PROVIDER == 'mailpit'
+        uses: supabase/setup-cli@v2
+
+      - name: Start local Supabase instance
+        if: env.MAIL_PROVIDER == 'mailpit'
+        run: |
+          supabase start
+          eval "$(supabase status -o env)"
+          echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+          echo "MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       # See https://github.com/ReactiveCircus/android-emulator-runner#running-hardware-accelerated-emulators-on-linux-runners
       - name: Enable KVM group perms
@@ -116,11 +181,6 @@ jobs:
 
       - name: Build release APK
         run: ./android/gradlew -p android assembleRelease -PreactNativeArchitectures=x86_64
-
-      - name: Install Maestro
-        run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       - name: Run Maestro on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
