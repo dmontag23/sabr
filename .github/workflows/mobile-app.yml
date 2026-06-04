@@ -48,6 +48,7 @@ jobs:
       MAIL_PROVIDER: ${{ steps.resolve-environment.outputs.MAIL_PROVIDER }}
     steps:
       - id: resolve-environment
+        working-directory: .
         run:
           | # When merging to the "develop" branch, or when opening a pull request from "develop" to "main", run e2e tests on staging. Otherwise, run using a local supabase instance.
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/develop" ]] \
