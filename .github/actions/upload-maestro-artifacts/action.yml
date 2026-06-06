@@ -9,7 +9,6 @@ runs:
   using: composite
   steps:
     - name: Upload Maestro test artifacts
-      if: failure()
       uses: actions/upload-artifact@v7
       with:
         name: maestro-${{ inputs.name }}

@@ -121,6 +121,7 @@ jobs:
         run: pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-artifacts
+        if: failure()
         with:
           name: ios
 
@@ -175,5 +176,6 @@ jobs:
             pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-artifacts
+        if: failure()
         with:
           name: android
