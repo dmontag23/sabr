@@ -1,6 +1,6 @@
 // Maestro only allows scripts in Javascript. Typescript is not currently supported.
 
-/* global MAIL_PROVIDER:readonly, MAILPIT_URL:readonly, RESEND_API_KEY:readonly */
+/* global MAESTRO_MAIL_PROVIDER:readonly, MAESTRO_MAILPIT_URL:readonly, MAESTRO_RESEND_API_KEY:readonly */
 
 const extractMagicLink = (html) => {
   const magicLinkPrefix = "app.sabr://auth/verify-token?token_hash=";
@@ -13,14 +13,14 @@ const callAPI = (url, headers) => {
 
   if (!apiResponse.ok)
     throw new Error(
-      `${MAIL_PROVIDER} GET to ${url} failed: status=${apiResponse.status} body=${apiResponse.body}`,
+      `${MAESTRO_MAIL_PROVIDER} GET to ${url} failed: status=${apiResponse.status} body=${apiResponse.body}`,
     );
 
   return json(apiResponse.body);
 };
 
 const extractMailpitEmailContent = () => {
-  const mailpitBaseURL = `${MAILPIT_URL}/api/v1`;
+  const mailpitBaseURL = `${MAESTRO_MAILPIT_URL}/api/v1`;
   const receivedEmails = callAPI(`${mailpitBaseURL}/messages`).messages;
 
   const emailId = receivedEmails.find(({ To }) =>
@@ -59,7 +59,7 @@ const poll = (
 
 const callResendAPI = (endpoint) =>
   callAPI(`https://api.resend.com/${endpoint}`, {
-    Authorization: `Bearer ${RESEND_API_KEY}`,
+    Authorization: `Bearer ${MAESTRO_RESEND_API_KEY}`,
   });
 
 const findResendTestEmail = (receivedEmails) =>
@@ -92,7 +92,7 @@ const extractEmailContent = () => {
     mailpit: extractMailpitEmailContent,
     resend: extractResendEmailContent,
   };
-  return providers[MAIL_PROVIDER]();
+  return providers[MAESTRO_MAIL_PROVIDER]();
 };
 
 output.auth.email = {

@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ENVIRONMENT: ${{ steps.resolve-environment.outputs.ENVIRONMENT }}
-      MAIL_PROVIDER: ${{ steps.resolve-environment.outputs.MAIL_PROVIDER }}
+      MAESTRO_MAIL_PROVIDER: ${{ steps.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
     steps:
       - id: resolve-environment
         working-directory: .
@@ -54,44 +54,41 @@ jobs:
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/develop" ]] \
             || [[ "${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "main" ]]; then
             echo "ENVIRONMENT=staging" >> "$GITHUB_OUTPUT"
-            echo "MAIL_PROVIDER=resend"  >> "$GITHUB_OUTPUT"
+            echo "MAESTRO_MAIL_PROVIDER=resend"  >> "$GITHUB_OUTPUT"
           else
             echo "ENVIRONMENT="         >> "$GITHUB_OUTPUT"
-            echo "MAIL_PROVIDER=mailpit" >> "$GITHUB_OUTPUT"
+            echo "MAESTRO_MAIL_PROVIDER=mailpit" >> "$GITHUB_OUTPUT"
           fi
 
   e2e_tests_ios:
     name: E2E tests - IOS 📱
-    # TODO: Run on a macos-26+ runner when Docker is supported.
+    runs-on: macos-26
+    # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
+    # The following "if" statement should be removed once Docker is supported on macos-26 runners.
     # See https://github.com/actions/runner-images/issues/13505
-    runs-on: macos-26-intel
+    if: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }} != 'mailpit'
     needs: resolve-environment
     environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
     env:
-      MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAIL_PROVIDER }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-app
 
-      # TODO: Remove this step once macos-26+ runners support Docker.
-      # See https://github.com/actions/runner-images/issues/13505
-      - name: Setup Docker Desktop
-        uses: gh-workflow/setup-docker-desktop-macos@0.0.12
-
       - name: Set up Supabase CLI
-        if: env.MAIL_PROVIDER == 'mailpit'
+        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
         uses: supabase/setup-cli@v2
 
       - name: Start local Supabase instance
-        if: env.MAIL_PROVIDER == 'mailpit'
+        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
         run: |
           supabase start
           eval "$(supabase status -o env)"
           echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
           echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
-          echo "MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
+          echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
 
       - name: Install Maestro
         run: |
@@ -129,13 +126,19 @@ jobs:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: pnpm test:e2e
 
+      - name: Upload Maestro debug output
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          path: /home/runner/.maestro/tests/
+
   e2e_tests_android:
     name: E2E tests - Android 🤖
     runs-on: ubuntu-latest
     needs: resolve-environment
     environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
     env:
-      MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAIL_PROVIDER }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
@@ -143,11 +146,11 @@ jobs:
       - uses: ./.github/actions/setup-app
 
       - name: Set up Supabase CLI
-        if: env.MAIL_PROVIDER == 'mailpit'
+        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
         uses: supabase/setup-cli@v2
 
       - name: Start local Supabase instance
-        if: env.MAIL_PROVIDER == 'mailpit'
+        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
         run: |
           supabase start
           eval "$(supabase status -o env)"
@@ -200,5 +203,4 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: maestro-debug-android
           path: /home/runner/.maestro/tests/
