@@ -205,7 +205,7 @@ jobs:
             pnpm test:e2e
 
       - name: Upload Maestro debug output
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           path: /home/runner/.maestro/tests/
