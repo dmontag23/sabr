@@ -45,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ENVIRONMENT: ${{ steps.resolve-environment.outputs.ENVIRONMENT }}
+      VARIANT: ${{ steps.resolve-environment.outputs.VARIANT }}
       MAESTRO_MAIL_PROVIDER: ${{ steps.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
     steps:
       - id: resolve-environment
@@ -54,9 +55,11 @@ jobs:
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/develop" ]] \
             || [[ "${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "main" ]]; then
             echo "ENVIRONMENT=staging" >> "$GITHUB_OUTPUT"
+            echo "VARIANT=release" >> "$GITHUB_OUTPUT"
             echo "MAESTRO_MAIL_PROVIDER=resend"  >> "$GITHUB_OUTPUT"
           else
-            echo "ENVIRONMENT="         >> "$GITHUB_OUTPUT"
+            echo "ENVIRONMENT=" >> "$GITHUB_OUTPUT"
+            echo "VARIANT=debug" >> "$GITHUB_OUTPUT"
             echo "MAESTRO_MAIL_PROVIDER=mailpit" >> "$GITHUB_OUTPUT"
           fi
 
@@ -75,6 +78,7 @@ jobs:
     environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
     env:
       MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      VARIANT: ${{ needs.resolve-environment.outputs.VARIANT == 'release' && 'Release' || 'Debug' }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
@@ -112,17 +116,21 @@ jobs:
           xcodebuild \
             -workspace "ios/sabr.xcworkspace" \
             -scheme sabr \
-            -configuration Release \
+            -configuration ${VARIANT} \
             -sdk iphonesimulator \
             -destination "id=${UDID}" \
             -derivedDataPath ios/build \
             build
 
+      - name: Start Metro
+        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
+        run: nohup pnpm start &
+
       - name: Launch simulator
         run: xcrun simctl boot "${UDID}"
 
       - name: Install app onto simulator
-        run: xcrun simctl install booted ios/build/Build/Products/Release-iphonesimulator/sabr.app
+        run: xcrun simctl install booted ios/build/Build/Products/${VARIANT}-iphonesimulator/sabr.app
 
       - name: Run Maestro
         env:
@@ -143,6 +151,7 @@ jobs:
     environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
     env:
       MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      VARIANT: ${{ needs.resolve-environment.outputs.VARIANT }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
@@ -187,14 +196,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build APK
-        run: |
-          if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then
-            APK_NAME=assembleDebug
-          else
-            APK_NAME=assembleRelease
-          fi
-          ./android/gradlew -p android $APK_NAME -PreactNativeArchitectures=x86_64
+      - name: Build ${{ env.VARIANT }} APK
+        run: ./android/gradlew -p android assemble${VARIANT^} -PreactNativeArchitectures=x86_64
 
       - name: Start Metro
         if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
@@ -210,16 +213,8 @@ jobs:
           arch: x86_64
           working-directory: app
           script: |
-            if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then
-              APK_NAME=debug
-              # Mailpit port
-              adb reverse tcp:54321 tcp:54321
-              # Metro port
-              adb reverse tcp:8081 tcp:8081
-            else
-              APK_NAME=release
-            fi
-            adb install "android/app/build/outputs/apk/${APK_NAME}/app-${APK_NAME}.apk"
+            if [ "$VARIANT" = "debug" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
+            adb install "android/app/build/outputs/apk/${VARIANT}/app-${VARIANT}.apk"
             pnpm test:e2e
 
       - name: Upload Maestro debug output
