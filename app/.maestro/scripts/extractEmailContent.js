@@ -22,8 +22,9 @@ const callAPI = (url, headers) => {
 const poll = (
   requestFn,
   shouldStopPolling,
-  { attempt = 1, maxAttempts = 25 } = {},
+  { attempt = 1, maxAttempts = 500 } = {},
 ) => {
+  console.log(`ATTEMPT ${attempt}!!!!!!!!!`);
   const value = requestFn();
   if (shouldStopPolling(value)) return value;
 
