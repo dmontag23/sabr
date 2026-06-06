@@ -19,27 +19,6 @@ const callAPI = (url, headers) => {
   return json(apiResponse.body);
 };
 
-const extractMailpitEmailContent = () => {
-  const mailpitBaseURL = `${MAESTRO_MAILPIT_URL}/api/v1`;
-  const receivedEmails = callAPI(`${mailpitBaseURL}/messages`).messages;
-
-  const emailId = receivedEmails.find(({ To }) =>
-    To.some(({ Address }) => Address === output.auth.email.recipient),
-  ).ID;
-
-  const { Subject, HTML, From } = callAPI(
-    `${mailpitBaseURL}/message/${emailId}`,
-  );
-
-  return {
-    subject: Subject,
-    body: HTML,
-    link: extractMagicLink(HTML),
-    senderName: From.Name,
-    senderEmail: From.Address,
-  };
-};
-
 const poll = (
   requestFn,
   shouldStopPolling,
@@ -55,6 +34,34 @@ const poll = (
     attempt: attempt + 1,
     maxAttempts,
   });
+};
+
+const findMailpitTestEmail = (receivedEmails) =>
+  receivedEmails.find(({ To }) =>
+    To.some(({ Address }) => Address === output.auth.email.recipient),
+  );
+
+const extractMailpitEmailContent = () => {
+  const mailpitBaseURL = `${MAESTRO_MAILPIT_URL}/api/v1`;
+  const receivedEmails = poll(
+    () => callAPI(`${mailpitBaseURL}/messages`).messages,
+    // Must ensure email recipient is unique per test to avoid race conditions here
+    findMailpitTestEmail,
+  );
+
+  const emailId = findMailpitTestEmail(receivedEmails).ID;
+
+  const { Subject, HTML, From } = callAPI(
+    `${mailpitBaseURL}/message/${emailId}`,
+  );
+
+  return {
+    subject: Subject,
+    body: HTML,
+    link: extractMagicLink(HTML),
+    senderName: From.Name,
+    senderEmail: From.Address,
+  };
 };
 
 const callResendAPI = (endpoint) =>
