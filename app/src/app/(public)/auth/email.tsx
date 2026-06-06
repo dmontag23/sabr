@@ -13,11 +13,9 @@ const EmailScreen = () => {
     const trimmedEmail = email.trim().toLowerCase();
 
     // TODO: Handle error!
-    const { error } = await supabase.auth.signInWithOtp({
+    await supabase.auth.signInWithOtp({
       email: trimmedEmail,
     });
-
-    console.log("ERROR", error);
 
     router.push({
       pathname: "/auth/verify-token",
