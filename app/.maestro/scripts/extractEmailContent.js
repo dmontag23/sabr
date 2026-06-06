@@ -43,9 +43,8 @@ const extractMailpitEmailContent = () => {
 const poll = (
   requestFn,
   shouldStopPolling,
-  { attempt = 1, maxAttempts = 500 } = {},
+  { attempt = 1, maxAttempts = 25 } = {},
 ) => {
-  console.log(`ATTEMPT ${attempt}!!!!!!!!!`);
   const value = requestFn();
   if (shouldStopPolling(value)) return value;
 
