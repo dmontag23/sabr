@@ -2,17 +2,20 @@ name: Mobile App
 on:
   pull_request:
     paths:
-      - .github/workflows/mobile-app.yml
       - .github/actions/setup-app/action.yml
+      - .github/actions/setup-e2e/action.yml
+      - .github/actions/upload-maestro-artifacts/action.yml
+      - .github/workflows/mobile-app.yml
       - app/**
 
   push:
+    branches: [develop, main]
     paths:
-      - .github/workflows/mobile-app.yml
       - .github/actions/setup-app/action.yml
+      - .github/actions/setup-e2e/action.yml
+      - .github/actions/upload-maestro-artifacts/action.yml
+      - .github/workflows/mobile-app.yml
       - app/**
-    branches:
-      - main
 
 defaults:
   run:
@@ -40,78 +43,60 @@ jobs:
       - name: Unit test
         run: pnpm test:unit
 
-  resolve-environment:
-    name: Resolve environment
+  resolve-variables-for-environment:
+    name: Resolve variables for e2e test environment
     runs-on: ubuntu-latest
     outputs:
-      ENVIRONMENT: ${{ steps.resolve-environment.outputs.ENVIRONMENT }}
-      VARIANT: ${{ steps.resolve-environment.outputs.VARIANT }}
-      MAESTRO_MAIL_PROVIDER: ${{ steps.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      ENVIRONMENT: ${{ steps.resolve.outputs.ENVIRONMENT }}
+      MAESTRO_MAIL_PROVIDER: ${{ steps.resolve.outputs.MAESTRO_MAIL_PROVIDER }}
+      VARIANT: ${{ steps.resolve.outputs.VARIANT }}
     steps:
-      - id: resolve-environment
+      - id: resolve
         working-directory: .
-        run:
-          | # When merging to the "develop" branch, or when opening a pull request from "develop" to "main", run e2e tests on staging. Otherwise, run using a local supabase instance.
+        run: |
+          # When merging to the "develop" branch, or opening a pull request from "develop" to "main"
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/develop" ]] \
             || [[ "${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "main" ]]; then
+            # Run e2e tests on the staging environment
             echo "ENVIRONMENT=staging" >> "$GITHUB_OUTPUT"
-            echo "VARIANT=release" >> "$GITHUB_OUTPUT"
             echo "MAESTRO_MAIL_PROVIDER=resend"  >> "$GITHUB_OUTPUT"
+            echo "VARIANT=release" >> "$GITHUB_OUTPUT"
           else
+            # Run tests on a local supabase instance
             echo "ENVIRONMENT=" >> "$GITHUB_OUTPUT"
-            echo "VARIANT=debug" >> "$GITHUB_OUTPUT"
             echo "MAESTRO_MAIL_PROVIDER=mailpit" >> "$GITHUB_OUTPUT"
+            echo "VARIANT=debug" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Print outputs
-        working-directory: .
-        run: echo '${{ toJSON(steps.resolve-environment.outputs) }}'
+      - name: Print variables
+        run: echo '${{ toJSON(steps.resolve.outputs) }}'
 
-  e2e_tests_ios:
+  e2e-tests-ios:
     name: E2E tests - IOS 📱
     runs-on: macos-26
     # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
     # The following "if" statement should be removed once Docker is supported on macos-26 runners.
     # See https://github.com/actions/runner-images/issues/13505
-    if: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER != 'mailpit' }}
-    needs: resolve-environment
-    environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
+    if: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER != 'mailpit' }}
+    needs: resolve-variables-for-environment
+    environment: ${{ needs.resolve-variables-for-environment.outputs.ENVIRONMENT }}
     env:
-      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
-      VARIANT: ${{ needs.resolve-environment.outputs.VARIANT == 'release' && 'Release' || 'Debug' }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      VARIANT: ${{ needs.resolve-variables-for-environment.outputs.VARIANT == 'release' && 'Release' || 'Debug' }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup-app
-
-      - name: Set up Supabase CLI
-        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-        uses: supabase/setup-cli@v2
-
-      - name: Start local Supabase instance
-        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-        run: |
-          supabase start
-          eval "$(supabase status -o env)"
-          echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
-          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
-          echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
-
-      - name: Install Maestro
-        run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
-
-      - name: Generate native iOS project
-        run: pnpm expo prebuild --platform ios
+      - uses: ./.github/actions/setup-e2e-tests
+        with:
+          platform: ios
 
       - name: Install simulator
         run: |
           UDID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
-          echo "UDID=${UDID}" >> "${GITHUB_ENV}"
+          echo "UDID=${UDID}" >> "$GITHUB_ENV"
 
-      - name: Build simulator .app
+      - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} simulator .app
         run: |
           xcodebuild \
             -workspace "ios/sabr.xcworkspace" \
@@ -122,59 +107,37 @@ jobs:
             -derivedDataPath ios/build \
             build
 
-      - name: Start Metro
-        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-        run: nohup pnpm start &
-
       - name: Launch simulator
         run: xcrun simctl boot "${UDID}"
 
       - name: Install app onto simulator
         run: xcrun simctl install booted ios/build/Build/Products/${VARIANT}-iphonesimulator/sabr.app
 
-      - name: Run Maestro
+      - name: Run Maestro on iOS simulator
         env:
           MAESTRO_CLI_NO_ANALYTICS: true
           MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: pnpm test:e2e
 
-      - name: Upload Maestro debug output
-        if: failure()
-        uses: actions/upload-artifact@v7
+      - uses: ./.github/actions/upload-maestro-artifacts
         with:
-          path: /home/runner/.maestro/tests/
+          name: ios
 
-  e2e_tests_android:
+  e2e-tests-android:
     name: E2E tests - Android 🤖
     runs-on: ubuntu-latest
-    needs: resolve-environment
-    environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
+    needs: resolve-variables-for-environment
+    environment: ${{ needs.resolve-variables-for-environment.outputs.ENVIRONMENT }}
     env:
-      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }}
-      VARIANT: ${{ needs.resolve-environment.outputs.VARIANT }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      VARIANT: ${{ needs.resolve-variables-for-environment.outputs.VARIANT }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup-app
-
-      - name: Set up Supabase CLI
-        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-        uses: supabase/setup-cli@v2
-
-      - name: Start local Supabase instance
-        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-        run: |
-          supabase start
-          eval "$(supabase status -o env)"
-          echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
-          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
-          echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
-
-      - name: Install Maestro
-        run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - uses: ./.github/actions/setup-e2e-tests
+        with:
+          platform: android
 
       # See https://github.com/ReactiveCircus/android-emulator-runner#running-hardware-accelerated-emulators-on-linux-runners
       - name: Enable KVM group perms
@@ -189,19 +152,12 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Generate native Android project
-        run: pnpm expo prebuild --platform android
-
       # Used to cache Gradle and make builds faster
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build ${{ needs.resolve-environment.outputs.VARIANT}} APK
+      - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} APK
         run: ./android/gradlew -p android assemble${VARIANT^} -PreactNativeArchitectures=x86_64
-
-      - name: Start Metro
-        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-        run: nohup pnpm start &
 
       - name: Run Maestro on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
@@ -217,8 +173,6 @@ jobs:
             adb install "android/app/build/outputs/apk/${VARIANT}/app-${VARIANT}.apk"
             pnpm test:e2e
 
-      - name: Upload Maestro debug output
-        if: failure()
-        uses: actions/upload-artifact@v7
+      - uses: ./.github/actions/upload-maestro-artifacts
         with:
-          path: /home/runner/.maestro/tests/
+          name: android
