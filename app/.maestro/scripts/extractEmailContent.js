@@ -19,21 +19,31 @@ const callAPI = (url, headers) => {
   return json(apiResponse.body);
 };
 
+// Maestro's JS runtime has no setTimeout/sleep, so busy-wait on the clock.
+const wait = (ms) => {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    // intentionally blocking until the wait time has elapsed
+  }
+};
+
 const poll = (
   requestFn,
   shouldStopPolling,
-  { attempt = 1, maxAttempts = 500 } = {},
+  { attempt = 1, maxAttempts = 30, waitMs = 1000 } = {},
 ) => {
-  console.log(`ATTEMPT ${attempt}!!!!!!!!!`);
   const value = requestFn();
   if (shouldStopPolling(value)) return value;
 
   if (attempt >= maxAttempts)
     throw new Error(`Poll failed after ${maxAttempts} attempts`);
 
+  wait(waitMs);
+
   return poll(requestFn, shouldStopPolling, {
     attempt: attempt + 1,
     maxAttempts,
+    waitMs,
   });
 };
 
