@@ -187,8 +187,18 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build release APK
-        run: ./android/gradlew -p android assembleRelease -PreactNativeArchitectures=x86_64
+      - name: Build APK
+        run: |
+          if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then
+            APK_NAME=assembleDebug
+          else
+            APK_NAME=assembleRelease
+          fi
+          ./android/gradlew -p android $APK_NAME -PreactNativeArchitectures=x86_64
+
+      - name: Start Metro
+        if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
+        run: nohup pnpm start &
 
       - name: Run Maestro on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
@@ -200,8 +210,16 @@ jobs:
           arch: x86_64
           working-directory: app
           script: |
-            adb reverse tcp:54321 tcp:54321
-            adb install "android/app/build/outputs/apk/release/app-release.apk"
+            if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then
+              APK_NAME=debug
+              # Mailpit port
+              adb reverse tcp:54321 tcp:54321
+              # Metro port
+              adb reverse tcp:8081 tcp:8081
+            else
+              APK_NAME=release
+            fi
+            adb install "android/app/build/outputs/apk/${APK_NAME}/app-${APK_NAME}.apk"
             pnpm test:e2e
 
       - name: Upload Maestro debug output
