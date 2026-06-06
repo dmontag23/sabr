@@ -69,6 +69,7 @@ jobs:
           fi
 
       - name: Print variables
+        working-directory: .
         run: echo '${{ toJSON(steps.resolve.outputs) }}'
 
   e2e-tests-ios:
