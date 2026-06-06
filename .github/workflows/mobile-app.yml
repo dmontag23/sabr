@@ -196,7 +196,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build ${{ env.VARIANT }} APK
+      - name: Build ${{ needs.resolve-environment.outputs.VARIANT}} APK
         run: ./android/gradlew -p android assemble${VARIANT^} -PreactNativeArchitectures=x86_64
 
       - name: Start Metro
