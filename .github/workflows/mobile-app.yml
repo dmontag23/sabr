@@ -70,7 +70,7 @@ jobs:
     # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
     # The following "if" statement should be removed once Docker is supported on macos-26 runners.
     # See https://github.com/actions/runner-images/issues/13505
-    if: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER }} != 'mailpit'
+    if: ${{ needs.resolve-environment.outputs.MAESTRO_MAIL_PROVIDER != 'mailpit' }}
     needs: resolve-environment
     environment: ${{ needs.resolve-environment.outputs.ENVIRONMENT }}
     env:
