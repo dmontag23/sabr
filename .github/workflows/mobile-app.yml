@@ -60,6 +60,10 @@ jobs:
             echo "MAESTRO_MAIL_PROVIDER=mailpit" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Print outputs
+        working-directory: .
+        run: echo '${{ toJSON(steps.resolve-environment.outputs) }}'
+
   e2e_tests_ios:
     name: E2E tests - IOS 📱
     runs-on: macos-26
@@ -156,7 +160,7 @@ jobs:
           eval "$(supabase status -o env)"
           echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
           echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
-          echo "MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
+          echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
 
       - name: Install Maestro
         run: |
