@@ -35,7 +35,7 @@ appId: app.sabr
     label: Email subject is "Log into Sabr"
     condition: ${output.auth.email.subject === "Log into Sabr"}
 - assertTrue:
-    label: Email sender name is " Sabr"
+    label: Email sender name is "Sabr"
     condition: ${output.auth.email.senderName === "Sabr"}
 - assertTrue:
     label: Email sender address is "login@notifications.unlikely.ai"
