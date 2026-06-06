@@ -201,7 +201,11 @@ jobs:
 
       - name: Start Metro
         if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-        run: nohup pnpm start &
+        run: |
+          nohup pnpm start &
+          # Warm the Metro bundle so the app launch isn't slow on its first compile
+          curl --retry 30 --retry-connrefused --retry-delay 2 -f \
+            "http://localhost:8081/index.bundle?platform=android"
 
       - name: Run Maestro on Android emulator
         uses: reactivecircus/android-emulator-runner@v2

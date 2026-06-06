@@ -4,9 +4,6 @@ appId: app.sabr
     clearState: true
 
 # Logged out landing screen
-- extendedWaitUntil:
-    visible: "Continue with email"
-    timeout: 120000
 - tapOn: "Continue with email"
 
 # Enter email screen
