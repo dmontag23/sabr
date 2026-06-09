@@ -3,6 +3,11 @@ data "tfe_outputs" "hcp_bootstrap" {
   workspace    = "bootstrap"
 }
 
+data "tfe_outputs" "resend" {
+  organization = local.organization_name
+  workspace    = "sabr-resend"
+}
+
 data "tfe_outputs" "supabase" {
   for_each     = local.deployment_environments
   organization = local.organization_name

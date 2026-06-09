@@ -83,4 +83,4 @@ Goal: rebuild in dependency order.
 - `terraform plan` does not contain any changes.
 - The `sabr` repository settings match the terraform.
 - `staging` and `production` environments exist with expected branch policies.
-- `SUPABASE_PROJECT_ID` and `SUPABASE_DB_PASSWORD` are present and have values in both environments.
+- Every environment secret and variable declared in [secrets.tf](./secrets.tf) is present and has a value in both the `staging` and `production` environments.

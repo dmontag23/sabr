@@ -9,8 +9,8 @@ Manages Resend resources for the `sabr` app.
 
 ## What this stack manages
 
-- Resend API key resource (`resend_api_key.supabase_smtp_api_key`) with access to send emails
-- The `supabase_smtp_api_key` is then consumed by [infra/supabase](/infra/supabase/)
+- Resend domain and the API keys used by the rest of the project (see [main.tf](./main.tf))
+- [Outputs](./outputs.tf) consumed by [infra/supabase](/infra/supabase/) (SMTP sending) and [infra/github](/infra/github/) (e2e testing API key)
 
 ## Authentication
 
@@ -20,7 +20,7 @@ Manages Resend resources for the `sabr` app.
 
 [infra/hcp-terraform](/infra/hcp-terraform/) must have applied successfully so the `sabr-resend` workspace and `RESEND_API_KEY` variable exist.
 
-[infra/supabase](/infra/supabase/) reads this stack's `supabase_smtp_api_key` output via `tfe_outputs`.
+[infra/supabase](/infra/supabase/) and [infra/github](/infra/github/) read this stack's [outputs](./outputs.tf) via `tfe_outputs`.
 
 ## Usage
 

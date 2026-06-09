@@ -64,5 +64,5 @@ If you see an error related to missing `tfe_outputs.resend` values, run `terrafo
 
 ## Notes
 
-- Outputs (`project_id`, `database_password`) are consumed by the [infra/github](/infra/github/) stack via `tfe_outputs`.
+- [Outputs](./outputs.tf) are consumed by the [infra/github](/infra/github/) stack via `tfe_outputs`.
 - If you see `workspace ... not found`, verify you selected `sabr-supabase-staging` or `sabr-supabase-production` and that [infra/hcp-terraform](/infra/hcp-terraform/) has already created those workspaces.

@@ -169,6 +169,7 @@ Each Supabase workspace should also have its own `project_name` Terraform variab
 Verify that the following run triggers exist:
 
 - from `sabr-resend` to both Supabase workspaces
+- from `sabr-resend` to `sabr-github`
 - from both Supabase workspaces to `sabr-github`
 
 ## Disaster recovery notes
