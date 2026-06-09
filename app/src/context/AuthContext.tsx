@@ -32,13 +32,4 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
   return <AuthContext value={{ isLoggedIn: !!userId }}>{children}</AuthContext>;
 };
 
-export const useAuthContext = () => {
-  const authContext = useContext(AuthContext);
-
-  if (!authContext)
-    throw new Error(
-      "useAuthContext must be used within an AuthContextProvider",
-    );
-
-  return authContext;
-};
+export const useAuthContext = () => useContext(AuthContext);

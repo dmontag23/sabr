@@ -11,33 +11,36 @@ is then used to encrypt/decrypt values stored in AsyncStorage. Taken from
 https://supabase.com/docs/guides/getting-started/tutorials/with-expo-react-native?queryGroups=auth-store&auth-store=secure-store
 */
 
+const generateCipher = (encryptionKeyBytes: Uint8Array) =>
+  new aesjs.ModeOfOperation.ctr(encryptionKeyBytes, new aesjs.Counter(1));
+
 const encrypt = async (key: string, value: string) => {
-  const encryptionKey = crypto.getRandomValues(new Uint8Array(256 / 8));
-  const cipher = new aesjs.ModeOfOperation.ctr(
-    encryptionKey,
-    new aesjs.Counter(1),
+  const encryptionKeyBytes = crypto.getRandomValues(new Uint8Array(256 / 8));
+  await SecureStore.setItemAsync(
+    key,
+    aesjs.utils.hex.fromBytes(encryptionKeyBytes),
   );
+
+  const cipher = generateCipher(encryptionKeyBytes);
   const encryptedValueBytes = cipher.encrypt(aesjs.utils.utf8.toBytes(value));
-  await SecureStore.setItemAsync(key, aesjs.utils.hex.fromBytes(encryptionKey));
   return aesjs.utils.hex.fromBytes(encryptedValueBytes);
 };
 
-const decrypt = async (key: string, value: string) => {
+const decrypt = async (key: string, encryptedValueHex: string) => {
   const encryptionKeyHex = await SecureStore.getItemAsync(key);
   if (!encryptionKeyHex) return encryptionKeyHex;
-  const cipher = new aesjs.ModeOfOperation.ctr(
-    aesjs.utils.hex.toBytes(encryptionKeyHex),
-    new aesjs.Counter(1),
+  const cipher = generateCipher(aesjs.utils.hex.toBytes(encryptionKeyHex));
+  const decryptedValueBytes = cipher.decrypt(
+    aesjs.utils.hex.toBytes(encryptedValueHex),
   );
-  const decryptedValueBytes = cipher.decrypt(aesjs.utils.hex.toBytes(value));
   return aesjs.utils.utf8.fromBytes(decryptedValueBytes);
 };
 
 const largeSecureStore: SupportedStorage = {
   getItem: async (key: string) => {
-    const encryptedValue = await AsyncStorage.getItem(key);
-    if (!encryptedValue) return encryptedValue;
-    return await decrypt(key, encryptedValue);
+    const encryptedValueHex = await AsyncStorage.getItem(key);
+    if (!encryptedValueHex) return encryptedValueHex;
+    return await decrypt(key, encryptedValueHex);
   },
 
   removeItem: async (key: string) => {
@@ -46,22 +49,14 @@ const largeSecureStore: SupportedStorage = {
   },
 
   setItem: async (key: string, value: string) => {
-    const encryptedValue = await encrypt(key, value);
-    await AsyncStorage.setItem(key, encryptedValue);
+    const encryptedValueHex = await encrypt(key, value);
+    await AsyncStorage.setItem(key, encryptedValueHex);
   },
 };
 
-if (
-  !process.env.EXPO_PUBLIC_SUPABASE_URL ||
-  !process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-)
-  throw new Error(
-    "Missing EXPO_PUBLIC_SUPABASE_URL and/or EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY environment variable(s).",
-  );
-
 export const supabase = createClient(
-  process.env.EXPO_PUBLIC_SUPABASE_URL,
-  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
   {
     auth: { storage: largeSecureStore, flowType: "pkce" },
   },
