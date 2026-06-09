@@ -3,8 +3,8 @@ on:
   pull_request:
     paths:
       - .github/actions/setup-app/action.yml
-      - .github/actions/setup-e2e/action.yml
-      - .github/actions/upload-maestro-artifacts/action.yml
+      - .github/actions/setup-e2e-tests/action.yml
+      - .github/actions/upload-maestro-test-artifacts/action.yml
       - .github/workflows/mobile-app.yml
       - app/**
 
@@ -12,8 +12,8 @@ on:
     branches: [develop, main]
     paths:
       - .github/actions/setup-app/action.yml
-      - .github/actions/setup-e2e/action.yml
-      - .github/actions/upload-maestro-artifacts/action.yml
+      - .github/actions/setup-e2e-tests/action.yml
+      - .github/actions/upload-maestro-test-artifacts/action.yml
       - .github/workflows/mobile-app.yml
       - app/**
 
@@ -54,8 +54,8 @@ jobs:
       - id: resolve
         working-directory: .
         run: |
-          # When merging to the "develop" branch, or opening a pull request from "develop" to "main"
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/develop" ]] \
+          # When merging to the "develop" branch, or opening a pull request from "develop" to "main", or when merging to the "main" branch
+          if [[ "${{ github.event_name }}" == "push" && ("${{ github.ref }}" == "refs/heads/develop" || "${{ github.ref }}" == "refs/heads/main") ]] \
             || [[ "${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "main" ]]; then
             # Run e2e tests on the staging environment
             echo "ENVIRONMENT=staging" >> "$GITHUB_OUTPUT"
@@ -120,7 +120,7 @@ jobs:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: pnpm test:e2e
 
-      - uses: ./.github/actions/upload-maestro-artifacts
+      - uses: ./.github/actions/upload-maestro-test-artifacts
         if: failure()
         with:
           name: ios
@@ -175,7 +175,7 @@ jobs:
             adb install "android/app/build/outputs/apk/${VARIANT}/app-${VARIANT}.apk"
             pnpm test:e2e
 
-      - uses: ./.github/actions/upload-maestro-artifacts
+      - uses: ./.github/actions/upload-maestro-test-artifacts
         if: failure()
         with:
           name: android

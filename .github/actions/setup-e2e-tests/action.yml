@@ -2,7 +2,7 @@ name: Setup e2e tests
 description: Prerequisites for running e2e tests on a mobile emulator
 inputs:
   platform:
-    description: Platform to run tests on (ios or android)
+    description: Platform to run tests on ("ios" or "android")
     required: true
 
 runs:
