@@ -82,6 +82,8 @@ jobs:
     needs: resolve-variables-for-environment
     environment: ${{ needs.resolve-variables-for-environment.outputs.ENVIRONMENT }}
     env:
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
       MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER }}
       VARIANT: ${{ needs.resolve-variables-for-environment.outputs.VARIANT == 'release' && 'Release' || 'Debug' }}
     steps:
@@ -131,6 +133,8 @@ jobs:
     needs: resolve-variables-for-environment
     environment: ${{ needs.resolve-variables-for-environment.outputs.ENVIRONMENT }}
     env:
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
       MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER }}
       VARIANT: ${{ needs.resolve-variables-for-environment.outputs.VARIANT }}
     steps:
