@@ -1,3 +1,11 @@
+resource "github_actions_environment_secret" "resend_api_key" {
+  repository = github_repository.sabr.name
+  # We never run e2e tests in production, so the resend API key only needs to be available in staging.
+  environment = "staging"
+  secret_name = "MAESTRO_RESEND_API_KEY"
+  value       = data.tfe_outputs.resend.values["e2e_tests_api_key"]
+}
+
 resource "github_actions_secret" "supabase_access_token" {
   repository  = github_repository.sabr.name
   secret_name = "SUPABASE_ACCESS_TOKEN"

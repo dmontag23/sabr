@@ -24,11 +24,11 @@ In this situation, it is only necessary to re-run `terraform apply` on the [infr
 In this situation, you need to rebuild the dependencies in order.
 
 1. Recreate HCP workspaces/variables by following the [HCP Terraform runbook](/infra/hcp-terraform/RUNBOOK.md).
-2. Re-run `terraform apply` in [this stack](/infra/resend/) to create the API key for the supabase SMTP integration.
-3. Re-run `terraform apply` in [infra/supabase](/infra/supabase/) so SMTP is setup via Resend.
+2. Re-run `terraform apply` in [this stack](/infra/resend/) to recreate the API keys (Supabase SMTP integration and e2e tests).
+3. Re-run `terraform apply` in the consuming stacks so they pick up the new outputs: [infra/supabase](/infra/supabase/) (SMTP) and [infra/github](/infra/github/) (e2e test API key).
 
 ## Verification checklist
 
 - `terraform plan` in `infra/resend` shows no changes.
-- The `supabase_smtp_api_key` output exists in the `sabr-resend` workspace.
-- A subsequent apply in [infra/supabase](/infra/supabase/) succeeds.
+- The stack's [outputs](./outputs.tf) exist in the `sabr-resend` workspace.
+- A subsequent apply in each consuming stack ([infra/supabase](/infra/supabase/) and [infra/github](/infra/github/)) succeeds.

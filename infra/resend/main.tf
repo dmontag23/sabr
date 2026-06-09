@@ -8,6 +8,12 @@ resource "resend_domain_verification" "sabr" {
   domain_id = resend_domain.sabr.id
 }
 
+resource "resend_api_key" "e2e_tests_api_key" {
+  name       = "sabr-e2e-tests"
+  permission = "full_access"
+  domain_id  = resend_domain.sabr.id
+}
+
 resource "resend_api_key" "supabase_smtp_api_key" {
   name       = "sabr-supabase-smtp-integration"
   permission = "sending_access"

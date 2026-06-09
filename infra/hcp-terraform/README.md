@@ -11,7 +11,7 @@ Manages the Terraform Cloud (HCP Terraform) workspaces: the `sabs-apps` organiza
 - The `sabr-resend` workspace for [/infra/resend](/infra/resend/)
 - The `sabr-supabase-staging` and `sabr-supabase-production` workspaces for [/infra/supabase](/infra/supabase/)
 - Shared variable set for Supabase workspaces
-- Cross-workspace run triggers (Resend -> Supabase -> GitHub)
+- Cross-workspace run triggers (Resend -> Supabase, Resend -> GitHub, Supabase -> GitHub)
 
 ## File structure
 
