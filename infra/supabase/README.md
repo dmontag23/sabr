@@ -7,9 +7,7 @@ Manages the Supabase projects for the `sabr` app.
 - Supabase project via (`supabase_project.sabr`)
 - Database password generation and rotation (default 30 days)
 - Supabase auth email settings, including SMTP configuration
-- Outputs consumed by `infra/github`:
-  - `project_id`
-  - `database_password` (sensitive)
+- [Outputs](./outputs.tf) consumed by [infra/github](/infra/github/) via `tfe_outputs`
 
 ## Required inputs
 

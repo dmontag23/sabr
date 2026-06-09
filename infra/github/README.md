@@ -11,7 +11,7 @@ Manages GitHub resources for the `sabr` repo.
 
 - Repository configuration and branch ruleset for the sabr app
 - `staging` and `production` GitHub environments & branch deployment policies
-- Repo & environment secrets for Supabase migrations
+- Repo and environment secrets/variables sourced from the Supabase stack (see [secrets.tf](./secrets.tf))
 
 ## Authentication
 
@@ -26,10 +26,7 @@ Manages GitHub resources for the `sabr` repo.
 - `environment_names`
 - `sabr_supabase_environment_names`
 
-`infra/supabase` must also have applied successfully at least once per environment so the following outputs are available:
-
-- `project_id`
-- `database_password`
+`infra/supabase` must also have applied successfully at least once per environment so its [outputs](/infra/supabase/outputs.tf) are available to this stack via `tfe_outputs`.
 
 ## Usage
 
