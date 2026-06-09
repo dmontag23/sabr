@@ -1,0 +1,15 @@
+name: Upload Maestro test artifacts
+description: Upload Maestro test artifacts when an e2e run fails
+inputs:
+  name:
+    description: The name of the artifact
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Upload Maestro test artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: maestro-${{ inputs.name }}
+        path: ~/.maestro/tests/

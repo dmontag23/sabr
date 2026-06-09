@@ -1,0 +1,49 @@
+appId: app.sabr
+---
+- launchApp:
+    clearState: true
+
+# Logged out landing screen
+- extendedWaitUntil:
+    visible: "Continue with email"
+    timeout: 120000
+- tapOn: "Continue with email"
+
+# Enter email screen
+- assertVisible: "you@email.com"
+- evalScript: '${output.auth = { email: { recipient: "e2e+" + Date.now().toString(36) + faker.number().digits(8) + "@notifications.unlikely.ai" }}}'
+- inputText: "${output.auth.email.recipient}"
+- tapOn: "Send me a code"
+
+# Verify token screen
+- assertVisible: "Tap the link we just sent you"
+
+# Extract email content
+# Returns the following output object:
+# output.auth.email = {
+#   subject: string,
+#   body: string,
+#   link: string,
+#   senderName: string,
+#   senderEmail: string,
+# }
+- runScript:
+    file: scripts/extractEmailContent.js
+
+# Validate email
+- assertTrue:
+    label: Email subject is "Log into Sabr"
+    condition: ${output.auth.email.subject === "Log into Sabr"}
+- assertTrue:
+    label: Email sender name is "Sabr"
+    condition: ${output.auth.email.senderName === "Sabr"}
+- assertTrue:
+    label: Email sender address is "login@notifications.unlikely.ai"
+    condition: ${output.auth.email.senderEmail === "login@notifications.unlikely.ai"}
+- assertTrue:
+    label: Email body contains all expected text
+    condition: ${["Magic Link", "Follow this link to login:", "Log in", output.auth.email.link].every(t => output.auth.email.body.includes(t))}
+
+# Return to app to log in
+- openLink: "${output.auth.email.link}"
+- assertVisible: "Home"

@@ -8,12 +8,11 @@ on:
       - app/src/types/database.types.ts
       - supabase/**
   push:
+    branches: [develop, main]
     paths:
       - .github/workflows/supabase-types.check.yml
       - app/src/types/database.types.ts
       - supabase/**
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
