@@ -4,15 +4,20 @@ resource "github_repository" "sabr" {
   delete_branch_on_merge = true
 }
 
-resource "github_repository_ruleset" "sabr_default_branch_protection" {
-  name        = "default-branch-protection"
+resource "github_repository_ruleset" "sabr_branch_protection" {
+  for_each = {
+    default = ["~DEFAULT_BRANCH"]
+    develop = ["refs/heads/develop"]
+  }
+
+  name        = "${each.key}-branch-protection"
   repository  = github_repository.sabr.name
   target      = "branch"
   enforcement = "active"
 
   conditions {
     ref_name {
-      include = ["~DEFAULT_BRANCH"]
+      include = each.value
       exclude = []
     }
   }
@@ -24,6 +29,9 @@ resource "github_repository_ruleset" "sabr_default_branch_protection" {
   }
 
   rules {
+    deletion         = true
+    non_fast_forward = true
+
     pull_request {
       required_approving_review_count   = 1
       dismiss_stale_reviews_on_push     = true
@@ -33,8 +41,17 @@ resource "github_repository_ruleset" "sabr_default_branch_protection" {
     }
 
     required_status_checks {
-      required_check {
-        context = "Run pre-commit"
+      strict_required_status_checks_policy = true
+
+      dynamic "required_check" {
+        # the names below much match GitHub Actions job names
+        for_each = [
+          "Run pre-commit",
+          "Static checks and unit/integration tests 🧪",
+          "Supabase type drift",
+        ]
+
+        content { context = required_check.value }
       }
     }
   }
