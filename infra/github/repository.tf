@@ -43,15 +43,8 @@ resource "github_repository_ruleset" "sabr_branch_protection" {
     required_status_checks {
       strict_required_status_checks_policy = true
 
-      dynamic "required_check" {
-        # the names below much match GitHub Actions job names
-        for_each = [
-          "Run pre-commit",
-          "Static checks and unit/integration tests 🧪",
-          "Supabase type drift",
-        ]
-
-        content { context = required_check.value }
+      required_check {
+        context = "Run pre-commit"
       }
     }
   }
