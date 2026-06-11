@@ -54,9 +54,8 @@ jobs:
       - id: resolve
         working-directory: .
         run: |
-          # When merging to the "develop" branch, or opening a pull request from "develop" to "main", or when merging to the "main" branch
-          if [[ "${{ github.event_name }}" == "push" && ("${{ github.ref }}" == "refs/heads/develop" || "${{ github.ref }}" == "refs/heads/main") ]] \
-            || [[ "${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "main" ]]; then
+          # When merging to the "develop" or "main" branches
+          if [[ "${{ github.event_name }}" == "push" && ("${{ github.ref }}" == "refs/heads/develop" || "${{ github.ref }}" == "refs/heads/main") ]]; then
             # Run e2e tests on the staging environment
             echo "ENVIRONMENT=staging" >> "$GITHUB_OUTPUT"
             echo "MAESTRO_MAIL_PROVIDER=resend"  >> "$GITHUB_OUTPUT"
