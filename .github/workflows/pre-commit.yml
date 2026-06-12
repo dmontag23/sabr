@@ -1,6 +1,8 @@
 name: Pre-commit
 on:
   pull_request:
+    # Assumes all PRs to the main branch will be from the develop branch
+    branches-ignore: [main]
   push:
     branches: [develop, main]
 

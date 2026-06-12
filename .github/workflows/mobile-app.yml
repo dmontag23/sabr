@@ -1,6 +1,8 @@
 name: Mobile App
 on:
   pull_request:
+    # Assumes all PRs to the main branch will be from the develop branch
+    branches-ignore: [main]
     paths:
       - .github/actions/setup-app/action.yml
       - .github/actions/setup-e2e-tests/action.yml
