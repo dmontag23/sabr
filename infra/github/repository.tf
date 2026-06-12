@@ -6,8 +6,14 @@ resource "github_repository" "sabr" {
 
 resource "github_repository_ruleset" "sabr_branch_protection" {
   for_each = {
-    default = ["~DEFAULT_BRANCH"]
-    develop = ["refs/heads/develop"]
+    default = {
+      included_refs   = ["~DEFAULT_BRANCH"]
+      required_checks = ["Run pre-commit", "PR source must be the develop branch"]
+    }
+    develop = {
+      included_refs   = ["refs/heads/develop"]
+      required_checks = ["Run pre-commit"]
+    }
   }
 
   name        = "${each.key}-branch-protection"
@@ -17,7 +23,7 @@ resource "github_repository_ruleset" "sabr_branch_protection" {
 
   conditions {
     ref_name {
-      include = each.value
+      include = each.value.included_refs
       exclude = []
     }
   }
@@ -44,13 +50,7 @@ resource "github_repository_ruleset" "sabr_branch_protection" {
       strict_required_status_checks_policy = true
 
       dynamic "required_check" {
-        # the names below much match GitHub Actions job names
-        for_each = [
-          "Run pre-commit",
-          "Static checks and unit/integration tests 🧪",
-          "Supabase type drift",
-        ]
-
+        for_each = each.value.required_checks
         content { context = required_check.value }
       }
     }
