@@ -2,16 +2,19 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
     schedule:
       interval: daily
 
   - package-ecosystem: pre-commit
     directory: /
+    target-branch: develop
     schedule:
       interval: daily
 
   - package-ecosystem: npm
     directory: /app
+    target-branch: develop
     schedule:
       interval: daily
     # ignore all expo dependencies that are upgraded manually by following https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/
@@ -42,5 +45,6 @@ updates:
 
   - package-ecosystem: terraform
     directories: ["/infra/*"]
+    target-branch: develop
     schedule:
       interval: daily
