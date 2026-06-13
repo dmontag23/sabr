@@ -11,10 +11,6 @@ on:
       - supabase/**
   push:
     branches: [develop, main]
-    paths:
-      - .github/workflows/supabase-types.check.yml
-      - app/src/types/database.types.ts
-      - supabase/**
   workflow_dispatch:
 
 jobs:
