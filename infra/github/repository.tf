@@ -35,7 +35,6 @@ resource "github_repository_ruleset" "sabr_branch_protection" {
   }
 
   rules {
-    deletion         = true
     non_fast_forward = true
 
     pull_request {
@@ -55,4 +54,22 @@ resource "github_repository_ruleset" "sabr_branch_protection" {
       }
     }
   }
+}
+
+# Ensures not even admins can delete critical branches.
+# Prevents e.g. accidentally deleting "develop" when merging to "main" when done by an admin bypassing the ruleset above.
+resource "github_repository_ruleset" "sabr_no_branch_deletion" {
+  name        = "no-critical-branch-deletion"
+  repository  = github_repository.sabr.name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["~DEFAULT_BRANCH", "refs/heads/develop"]
+      exclude = []
+    }
+  }
+
+  rules { deletion = true }
 }
