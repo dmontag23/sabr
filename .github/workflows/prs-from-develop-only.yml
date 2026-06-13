@@ -11,7 +11,7 @@ jobs:
       - name: Verify PR is from the develop branch
         run: |
           if [[ "${{ github.head_ref }}" != "develop" ]]; then
-            echo "::error::Only the 'develop' branch may open a PR into the 'main' branch."
+            echo "Only the 'develop' branch may open a PR into the 'main' branch."
             exit 1
           fi
-          echo "OK: PR is from the 'develop' branch."
+          echo "PR is from the 'develop' branch."

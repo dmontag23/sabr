@@ -1,9 +1,15 @@
 name: Pre-commit
 on:
   pull_request:
+    # Assumes all PRs to the main branch will be from the develop branch
+    branches-ignore: [main]
   push:
-    branches:
-      - main
+    branches: [develop, main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   pre-commit:
     name: Run pre-commit
@@ -24,10 +30,15 @@ jobs:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
 
+      - name: Read Terraform version
+        id: tf
+        working-directory: infra
+        run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v4
         with:
-          terraform_version: "1.15.0"
+          terraform_version: ${{ steps.tf.outputs.version }}
 
       - name: Set up TFLint
         uses: terraform-linters/setup-tflint@v6

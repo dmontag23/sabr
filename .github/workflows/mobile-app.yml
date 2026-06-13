@@ -1,18 +1,21 @@
 name: Mobile App
 on:
   pull_request:
+    # Assumes all PRs to the main branch will be from the develop branch
+    branches-ignore: [main]
     paths:
-      - .github/workflows/mobile-app.yml
       - .github/actions/setup-app/action.yml
+      - .github/actions/setup-e2e-tests/action.yml
+      - .github/actions/upload-maestro-test-artifacts/action.yml
+      - .github/workflows/mobile-app.yml
       - app/**
 
   push:
-    paths:
-      - .github/workflows/mobile-app.yml
-      - .github/actions/setup-app/action.yml
-      - app/**
-    branches:
-      - main
+    branches: [develop, main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 defaults:
   run:
@@ -40,29 +43,68 @@ jobs:
       - name: Unit and integration tests
         run: pnpm test:unit-integration
 
-  e2e_tests_ios:
+  resolve-variables-for-environment:
+    name: Resolve variables for e2e test environment
+    runs-on: ubuntu-latest
+    outputs:
+      ENVIRONMENT: ${{ steps.resolve.outputs.ENVIRONMENT }}
+      MAESTRO_MAIL_PROVIDER: ${{ steps.resolve.outputs.MAESTRO_MAIL_PROVIDER }}
+      VARIANT: ${{ steps.resolve.outputs.VARIANT }}
+    steps:
+      - id: resolve
+        working-directory: .
+        run: |
+          # When merging to the "develop" or "main" branches
+          if [[ "${{ github.event_name }}" == "push" && ("${{ github.ref }}" == "refs/heads/develop" || "${{ github.ref }}" == "refs/heads/main") ]]; then
+            # Run e2e tests on the staging environment
+            echo "ENVIRONMENT=staging" >> "$GITHUB_OUTPUT"
+            echo "MAESTRO_MAIL_PROVIDER=resend"  >> "$GITHUB_OUTPUT"
+            echo "VARIANT=release" >> "$GITHUB_OUTPUT"
+          else
+            # Run tests on a local supabase instance
+            echo "ENVIRONMENT=" >> "$GITHUB_OUTPUT"
+            echo "MAESTRO_MAIL_PROVIDER=mailpit" >> "$GITHUB_OUTPUT"
+            echo "VARIANT=debug" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print variables
+        working-directory: .
+        run: echo '${{ toJSON(steps.resolve.outputs) }}'
+
+  e2e-tests-ios:
     name: E2E tests - IOS 📱
     runs-on: macos-26
+    # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
+    # The following "if" statement should be removed once Docker is supported on macos-26 runners.
+    # See https://github.com/actions/runner-images/issues/13505
+    if: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER != 'mailpit' }}
+    needs: resolve-variables-for-environment
+    environment: ${{ needs.resolve-variables-for-environment.outputs.ENVIRONMENT }}
+    env:
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
+      VARIANT: ${{ needs.resolve-variables-for-environment.outputs.VARIANT == 'release' && 'Release' || 'Debug' }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup-app
-
-      - name: Generate native iOS project
-        run: pnpm expo prebuild --platform ios
+      - uses: ./.github/actions/setup-e2e-tests
+        with:
+          platform: ios
 
       - name: Install simulator
         run: |
           UDID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
-          echo "UDID=${UDID}" >> "${GITHUB_ENV}"
+          echo "UDID=${UDID}" >> "$GITHUB_ENV"
 
-      - name: Build simulator .app
+      - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} simulator .app
         run: |
           xcodebuild \
             -workspace "ios/sabr.xcworkspace" \
             -scheme sabr \
-            -configuration Release \
+            -configuration ${VARIANT} \
             -sdk iphonesimulator \
             -destination "id=${UDID}" \
             -derivedDataPath ios/build \
@@ -72,27 +114,37 @@ jobs:
         run: xcrun simctl boot "${UDID}"
 
       - name: Install app onto simulator
-        run: xcrun simctl install booted ios/build/Build/Products/Release-iphonesimulator/sabr.app
+        run: xcrun simctl install booted ios/build/Build/Products/${VARIANT}-iphonesimulator/sabr.app
 
-      - name: Install Maestro
-        run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
-
-      - name: Run Maestro
+      - name: Run Maestro on iOS simulator
         env:
           MAESTRO_CLI_NO_ANALYTICS: true
           MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: pnpm test:e2e
 
-  e2e_tests_android:
+      - uses: ./.github/actions/upload-maestro-test-artifacts
+        if: failure()
+        with:
+          name: ios
+
+  e2e-tests-android:
     name: E2E tests - Android 🤖
     runs-on: ubuntu-latest
+    needs: resolve-variables-for-environment
+    environment: ${{ needs.resolve-variables-for-environment.outputs.ENVIRONMENT }}
+    env:
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
+      VARIANT: ${{ needs.resolve-variables-for-environment.outputs.VARIANT }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup-app
+      - uses: ./.github/actions/setup-e2e-tests
+        with:
+          platform: android
 
       # See https://github.com/ReactiveCircus/android-emulator-runner#running-hardware-accelerated-emulators-on-linux-runners
       - name: Enable KVM group perms
@@ -107,20 +159,12 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Generate native Android project
-        run: pnpm expo prebuild --platform android
-
       # Used to cache Gradle and make builds faster
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build release APK
-        run: ./android/gradlew -p android assembleRelease -PreactNativeArchitectures=x86_64
-
-      - name: Install Maestro
-        run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} APK
+        run: ./android/gradlew -p android assemble${VARIANT^} -PreactNativeArchitectures=x86_64
 
       - name: Run Maestro on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
@@ -132,5 +176,11 @@ jobs:
           arch: x86_64
           working-directory: app
           script: |
-            adb install "android/app/build/outputs/apk/release/app-release.apk"
+            if [ "$VARIANT" = "debug" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
+            adb install "android/app/build/outputs/apk/${VARIANT}/app-${VARIANT}.apk"
             pnpm test:e2e
+
+      - uses: ./.github/actions/upload-maestro-test-artifacts
+        if: failure()
+        with:
+          name: android

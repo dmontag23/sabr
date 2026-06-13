@@ -3,18 +3,19 @@ name: Supabase Type Drift Check
 
 on:
   pull_request:
+    # Assumes all PRs to the main branch will be from the develop branch
+    branches-ignore: [main]
     paths:
       - .github/workflows/supabase-types.check.yml
       - app/src/types/database.types.ts
       - supabase/**
   push:
-    paths:
-      - .github/workflows/supabase-types.check.yml
-      - app/src/types/database.types.ts
-      - supabase/**
-    branches:
-      - main
+    branches: [develop, main]
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   type-drift:

@@ -7,6 +7,19 @@ module.exports = defineConfig([
   expoConfig,
   eslintPluginPrettierRecommended,
   {
-    ignores: ["dist/*"],
+    ignores: ["dist/**"],
+  },
+  {
+    files: [".maestro/scripts/**/*.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: {
+        output: "writable",
+        http: "readonly",
+        maestro: "readonly",
+        faker: "readonly",
+        json: "readonly",
+      },
+    },
   },
 ]);
