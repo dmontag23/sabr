@@ -7,12 +7,12 @@ resource "github_repository" "sabr" {
 resource "github_repository_ruleset" "sabr_branch_protection" {
   for_each = {
     default = {
-      included_refs   = ["~DEFAULT_BRANCH"]
-      required_checks = ["Run pre-commit", "PR source must be the develop branch"]
+      included_refs          = ["~DEFAULT_BRANCH"]
+      unique_required_checks = ["PR source must be the develop branch", "Supabase type drift", "Static checks and unit/integration tests 🧪", "E2E tests - IOS 📱", "E2E tests - Android 🤖"]
     }
     develop = {
-      included_refs   = ["refs/heads/develop"]
-      required_checks = ["Run pre-commit"]
+      included_refs          = ["refs/heads/develop"]
+      unique_required_checks = []
     }
   }
 
@@ -50,7 +50,7 @@ resource "github_repository_ruleset" "sabr_branch_protection" {
       strict_required_status_checks_policy = true
 
       dynamic "required_check" {
-        for_each = each.value.required_checks
+        for_each = concat(each.value.unique_required_checks, ["Run pre-commit"])
         content { context = required_check.value }
       }
     }
