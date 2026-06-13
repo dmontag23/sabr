@@ -13,6 +13,10 @@ on:
     branches: [develop, main]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   type-drift:
     name: Supabase type drift
