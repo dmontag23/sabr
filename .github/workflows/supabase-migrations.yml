@@ -8,6 +8,9 @@ on:
       - supabase/**
   workflow_dispatch:
 
+concurrency:
+  group: supabase-migrations-${{ github.ref }}
+
 jobs:
   deploy:
     name: Deploy migrations to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
