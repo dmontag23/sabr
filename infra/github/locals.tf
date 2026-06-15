@@ -4,12 +4,12 @@ locals {
   github_deployment_environments = {
 
     staging = {
-      branch_pattern   = "develop"
+      branch_patterns  = ["develop", "main"]
       require_reviewer = false
     }
 
     production = {
-      branch_pattern   = "main"
+      branch_patterns  = ["main"]
       require_reviewer = true
     }
   }

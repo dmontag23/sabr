@@ -23,9 +23,17 @@ resource "github_repository_environment" "environment" {
 }
 
 resource "github_repository_environment_deployment_policy" "environment" {
-  for_each = local.deployment_environments
+  for_each = merge([
+    for env_key, env in local.deployment_environments : {
+      for pattern in env.branch_patterns :
+      "${env_key}/${pattern}" => {
+        environment    = env_key
+        branch_pattern = pattern
+      }
+    }
+  ]...)
 
   repository     = github_repository.sabr.name
-  environment    = github_repository_environment.environment[each.key].environment
+  environment    = github_repository_environment.environment[each.value.environment].environment
   branch_pattern = each.value.branch_pattern
 }
