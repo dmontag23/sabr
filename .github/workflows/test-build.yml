@@ -1,0 +1,47 @@
+name: Continuous Development (PRs)
+
+on:
+  pull_request:
+    # Assumes all PRs to the main branch will be from the develop branch
+    branches-ignore: [main]
+    paths:
+      - .github/actions/setup-app/action.yml
+      - .github/workflows/test-build.yml
+      - app/**
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-app
+
+  continuously-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    concurrency: continuous-deploy-fingerprint-${{ github.run_id }}
+    permissions:
+      contents: read # Allow checkout
+      pull-requests: write # Allow comments on PRs
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-app
+
+      - name: 🏗 Setup EAS CLI
+        uses: expo/expo-github-action@main
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Continuously Deploy
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+        with:
+          profile: development-ios-simulator
+          branch: development
