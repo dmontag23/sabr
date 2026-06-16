@@ -39,3 +39,4 @@ jobs:
         with:
           profile: development-ios-simulator
           branch: development
+          working-directory: ${{ github.workspace }}/app
