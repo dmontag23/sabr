@@ -13,16 +13,7 @@ env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
-
-      - uses: ./.github/actions/setup-app
-
   continuously-deploy:
-    needs: test
     runs-on: ubuntu-latest
     concurrency: continuous-deploy-fingerprint-${{ github.run_id }}
     permissions:
@@ -37,6 +28,7 @@ jobs:
       - name: 🏗 Setup EAS CLI
         uses: expo/expo-github-action@main
         with:
+          packager: pnpm
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
