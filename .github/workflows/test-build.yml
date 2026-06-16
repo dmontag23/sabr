@@ -27,6 +27,8 @@ jobs:
 
       - name: 🏗 Setup EAS CLI
         uses: expo/expo-github-action@main
+        env:
+          PNPM_CONFIG_STRICT_DEP_BUILDS: "false"
         with:
           packager: pnpm
           eas-version: latest
