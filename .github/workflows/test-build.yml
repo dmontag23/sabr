@@ -40,3 +40,5 @@ jobs:
           profile: development-ios-simulator
           branch: development
           working-directory: ${{ github.workspace }}/app
+          # TODO: REMOVE THE LINE BELOW!!!
+          platform: ios
