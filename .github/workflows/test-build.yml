@@ -49,3 +49,11 @@ jobs:
           echo "ios-build-id: ${{ steps.fingerprint.outputs.ios-build-id }}"
           echo "ios-fingerprint: ${{ steps.fingerprint.outputs.ios-fingerprint }}"
           echo "android-fingerprint: ${{ steps.fingerprint.outputs.android-fingerprint }}"
+
+      - name: EAS Build
+        if: ${{ steps.fingerprint.outputs.ios-fingerprint == '' }}
+        run: eas build --non-interactive --profile=development-ios-simulator -p ios
+
+      - name: Download EAS Build
+        if: ${{ steps.fingerprint.outputs.ios-fingerprint != '' }}
+        run: eas build:download --fingerprint ${{ steps.fingerprint.outputs.ios-fingerprint }}
