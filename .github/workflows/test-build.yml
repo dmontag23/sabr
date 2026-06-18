@@ -34,7 +34,7 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Continuously Deploy
+      - name: Get fingerprint
         uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
         with:
           profile: development-ios-simulator
