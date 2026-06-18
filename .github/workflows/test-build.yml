@@ -56,4 +56,5 @@ jobs:
 
       - name: Download EAS Build
         if: ${{ steps.fingerprint.outputs.ios-fingerprint != '' }}
+        working-directory: ${{ github.workspace }}/app
         run: eas build:download --fingerprint ${{ steps.fingerprint.outputs.ios-fingerprint }}
