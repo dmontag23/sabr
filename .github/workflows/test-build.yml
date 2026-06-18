@@ -35,16 +35,17 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Get fingerprint
-        uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: development-ios-simulator
+          branch: development
           working-directory: ${{ github.workspace }}/app
           # TODO: REMOVE THE LINE BELOW!!!
           platform: ios
 
-      - name: Show action outputs
-        run: |
-          echo "android-build-id: ${{ steps.deploy.outputs.android-build-id }}"
-          echo "ios-build-id: ${{ steps.deploy.outputs.ios-build-id }}"
-          echo "ios-fingerprint: ${{ steps.deploy.outputs.ios-fingerprint }}"
-          echo "android-fingerprint: ${{ steps.deploy.outputs.android-fingerprint }}"
+      # - name: Show action outputs
+      #   run: |
+      #     echo "android-build-id: ${{ steps.deploy.outputs.android-build-id }}"
+      #     echo "ios-build-id: ${{ steps.deploy.outputs.ios-build-id }}"
+      #     echo "ios-fingerprint: ${{ steps.deploy.outputs.ios-fingerprint }}"
+      #     echo "android-fingerprint: ${{ steps.deploy.outputs.android-fingerprint }}"
