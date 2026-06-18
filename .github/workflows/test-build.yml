@@ -80,3 +80,8 @@ jobs:
           MAESTRO_CLI_NO_ANALYTICS: true
           MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: pnpm test:e2e
+
+      - uses: ./.github/actions/upload-maestro-test-artifacts
+        if: failure()
+        with:
+          name: ios
