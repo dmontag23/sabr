@@ -41,3 +41,10 @@ jobs:
           working-directory: ${{ github.workspace }}/app
           # TODO: REMOVE THE LINE BELOW!!!
           platform: ios
+
+      - name: Show action outputs
+        run: |
+          echo "build-id: ${{ steps.deploy.outputs.android-build-id }}"
+          echo "ios-build-id: ${{ steps.deploy.outputs.ios-build-id }}"
+          echo "ios-fingerprint: ${{ steps.deploy.outputs.ios-fingerprint }}"
+          echo "android-fingerprint: ${{ steps.deploy.outputs.android-fingerprint }}"
