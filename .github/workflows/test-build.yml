@@ -67,4 +67,4 @@ jobs:
           echo "SIM_ID=${SIM_ID}" >> "$GITHUB_OUTPUT"
 
       - name: Install EAS Build
-        run: eas build:run --id ${{ steps.build.outputs.BUILD_ID || steps.fingerprint.outputs.ios-build-id }} -p ios --simulator steps.install-simulator.outputs.SIM_ID
+        run: eas build:run --id ${{ steps.build.outputs.BUILD_ID || steps.fingerprint.outputs.ios-build-id }} -p ios --simulator ${{ steps.install-simulator.outputs.SIM_ID }}
