@@ -61,4 +61,4 @@ jobs:
           echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
       - name: Install EAS Build
-        run: eas build:run --id ${{ steps.build.outputs.BUILD_ID || steps.fingerprint.outputs.ios-build-id }}
+        run: eas build:run --id ${{ steps.build.outputs.BUILD_ID || steps.fingerprint.outputs.ios-build-id }} -p ios
