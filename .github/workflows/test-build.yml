@@ -19,6 +19,9 @@ jobs:
     permissions:
       contents: read # Allow checkout
       pull-requests: write # Allow comments on PRs
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/app
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
@@ -39,7 +42,6 @@ jobs:
         uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
         with:
           profile: development-ios-simulator
-          working-directory: ${{ github.workspace }}/app
           # TODO: REMOVE THE LINE BELOW!!!
           platform: ios
 
@@ -56,5 +58,4 @@ jobs:
 
       - name: Download EAS Build
         if: ${{ steps.fingerprint.outputs.ios-fingerprint != '' }}
-        working-directory: ${{ github.workspace }}/app
         run: eas build:download --fingerprint ${{ steps.fingerprint.outputs.ios-fingerprint }}
