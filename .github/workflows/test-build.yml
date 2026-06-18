@@ -35,6 +35,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Get fingerprint
+        id: fingerprint
         uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
         with:
           profile: development-ios-simulator
@@ -44,7 +45,7 @@ jobs:
 
       - name: Show action outputs
         run: |
-          echo "android-build-id: ${{ steps.deploy.outputs.android-build-id }}"
-          echo "ios-build-id: ${{ steps.deploy.outputs.ios-build-id }}"
-          echo "ios-fingerprint: ${{ steps.deploy.outputs.ios-fingerprint }}"
-          echo "android-fingerprint: ${{ steps.deploy.outputs.android-fingerprint }}"
+          echo "android-build-id: ${{ steps.fingerprint.outputs.android-build-id }}"
+          echo "ios-build-id: ${{ steps.fingerprint.outputs.ios-build-id }}"
+          echo "ios-fingerprint: ${{ steps.fingerprint.outputs.ios-fingerprint }}"
+          echo "android-fingerprint: ${{ steps.fingerprint.outputs.android-fingerprint }}"
