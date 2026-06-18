@@ -42,6 +42,7 @@ jobs:
         uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
         with:
           profile: development-ios-simulator
+          working-directory: ${{ github.workspace }}/app
           # TODO: REMOVE THE LINE BELOW!!!
           platform: ios
 
