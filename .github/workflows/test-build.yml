@@ -55,8 +55,10 @@ jobs:
 
       - name: EAS Build
         if: ${{ steps.fingerprint.outputs.ios-build-id == '' }}
-        run: eas build --non-interactive --profile=development-ios-simulator -p ios
+        id: build
+        run: |
+          BUILD_ID=$(eas build --non-interactive --profile=development-ios-simulator -p ios --json | jq -r '.[0].id')
+          echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Download EAS Build
-        if: ${{ steps.fingerprint.outputs.ios-build-id != '' }}
-        run: eas build:download --build-id ${{ steps.fingerprint.outputs.ios-build-id }}
+      - name: Install EAS Build
+        run: eas build:run --id ${{ steps.build.outputs.BUILD_ID || steps.fingerprint.outputs.ios-build-id }}
