@@ -35,10 +35,9 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Continuously Deploy
-        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+        uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
         with:
           profile: development-ios-simulator
-          branch: development
           working-directory: ${{ github.workspace }}/app
           # TODO: REMOVE THE LINE BELOW!!!
           platform: ios
