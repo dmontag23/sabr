@@ -95,26 +95,46 @@ jobs:
           platform: ios
 
       - name: Install simulator
+        id: install-simulator
         run: |
-          UDID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
-          echo "UDID=${UDID}" >> "$GITHUB_ENV"
+          SIM_ID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
+          echo "SIM_ID=${SIM_ID}" >> "$GITHUB_OUTPUT"
 
-      - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} simulator .app
+      - name: Get fingerprint
+        id: fingerprint
+        uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
+        with:
+          profile: development-ios-simulator
+          working-directory: ${{ github.workspace }}/app
+          # TODO: REMOVE THE LINE BELOW!!!
+          platform: ios
+
+      - name: EAS Build
+        if: ${{ steps.fingerprint.outputs.ios-build-id == '' }}
+        id: build
         run: |
-          xcodebuild \
-            -workspace "ios/sabr.xcworkspace" \
-            -scheme sabr \
-            -configuration ${VARIANT} \
-            -sdk iphonesimulator \
-            -destination "id=${UDID}" \
-            -derivedDataPath ios/build \
-            build
+          BUILD_ID=$(eas build --non-interactive --profile=development-ios-simulator -p ios --json | jq -r '.[0].id')
+          echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Launch simulator
-        run: xcrun simctl boot "${UDID}"
+      - name: Install EAS Build
+        run: eas build:run --id ${{ steps.build.outputs.BUILD_ID || steps.fingerprint.outputs.ios-build-id }} -p ios --simulator ${{ steps.install-simulator.outputs.SIM_ID }}
 
-      - name: Install app onto simulator
-        run: xcrun simctl install booted ios/build/Build/Products/${VARIANT}-iphonesimulator/sabr.app
+      # - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} simulator .app
+      #   run: |
+      #     xcodebuild \
+      #       -workspace "ios/sabr.xcworkspace" \
+      #       -scheme sabr \
+      #       -configuration ${VARIANT} \
+      #       -sdk iphonesimulator \
+      #       -destination "id=${UDID}" \
+      #       -derivedDataPath ios/build \
+      #       build
+
+      # - name: Launch simulator
+      #   run: xcrun simctl boot "${UDID}"
+
+      # - name: Install app onto simulator
+      #   run: xcrun simctl install booted ios/build/Build/Products/${VARIANT}-iphonesimulator/sabr.app
 
       - name: Run Maestro on iOS simulator
         env:
