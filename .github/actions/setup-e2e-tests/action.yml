@@ -45,6 +45,7 @@ runs:
       if: ${{ steps.fingerprint.outputs.android-build-id == '' }}
       id: build
       # TODO: Build based on PR, merge to develop, etc!!!
+      shell: bash
       run: |
         BUILD_ID=$(eas build --non-interactive --profile=development -p android --json | jq -r '.[0].id')
         echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_OUTPUT"
