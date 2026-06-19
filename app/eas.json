@@ -5,10 +5,6 @@
       "distribution": "internal",
       "channel": "development"
     },
-    "development-ios-simulator": {
-      "extends": "development",
-      "ios": { "simulator": true }
-    },
     "staging": {
       "distribution": "internal",
       "channel": "staging"
