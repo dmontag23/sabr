@@ -4,6 +4,13 @@ inputs:
   platform:
     description: Platform to run tests on ("ios" or "android")
     required: true
+  expo-token:
+    description: Expo access token
+    required: true
+outputs:
+  build-id:
+    description: EAS build id to install on the emulator
+    value: ${{ steps.build.outputs.BUILD_ID || steps.fingerprint.outputs.android-build-id }}
 
 runs:
   using: composite
@@ -22,7 +29,25 @@ runs:
       with:
         packager: pnpm
         eas-version: latest
-        token: ${{ secrets.EXPO_TOKEN }}
+        token: ${{ inputs.expo-token }}
+
+    - name: Get fingerprint
+      id: fingerprint
+      uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
+      with:
+        # TODO: CHOOSE PROFILE BASED ON PR, MERGE TO DEVELOP, ETC
+        profile: development
+        working-directory: app
+        # TODO: REMOVE THE LINE BELOW!!!
+        platform: android
+
+    - name: EAS Build
+      if: ${{ steps.fingerprint.outputs.android-build-id == '' }}
+      id: build
+      # TODO: Build based on PR, merge to develop, etc!!!
+      run: |
+        BUILD_ID=$(eas build --non-interactive --profile=development -p android --json | jq -r '.[0].id')
+        echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
     - name: Install Maestro
       shell: bash
