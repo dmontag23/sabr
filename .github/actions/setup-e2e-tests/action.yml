@@ -16,14 +16,11 @@ runs:
 
     - name: 🏗 Setup EAS CLI
       uses: expo/expo-github-action@main
-      env:
-        PNPM_CONFIG_STRICT_DEP_BUILDS: "false"
       with:
-        packager: pnpm
         eas-version: latest
 
     - name: Resolve EAS profile
-      id: profile
+      id: eas-profile
       shell: bash
       run: |
         if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then
@@ -34,26 +31,25 @@ runs:
           echo "value=staging" >> "$GITHUB_OUTPUT"
         fi
 
-    - name: Get fingerprint
+    - name: Get app fingerprint
       id: fingerprint
       uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
       with:
-        profile: ${{ steps.profile.outputs.value }}
+        profile: ${{ steps.eas-profile.outputs.value }}
         working-directory: app
         platform: ${{ inputs.platform }}
 
-    - name: EAS Build
+    - name: Build app on EAS Cloud
       if: ${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] == '' }}
       id: build
       working-directory: app
-      # TODO: Build based on PR, merge to develop, etc!!!
       shell: bash
       run: |
-        build-id=$(eas build --non-interactive --profile=${{ steps.profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
+        build-id=$(eas build --non-interactive --profile=${{ steps.eas-profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
         echo "build-id=$build-id" >> "$GITHUB_OUTPUT"
 
     - name: Repack JS into release build
-      if: ${{ steps.profile.outputs.value != 'development' && steps.build.outputs.build-id == '' }}
+      if: ${{ steps.eas-profile.outputs.value != 'development' && steps.build.outputs.build-id == '' }}
       id: repack
       working-directory: app
       shell: bash
@@ -61,9 +57,9 @@ runs:
         mkdir source && (cd source && eas build:download --non-interactive --build-id "${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] }}")
         if [ "${{ inputs.platform }}" = "android" ]; then
           keytool -genkeypair -keyalg RSA -validity 10000 -dname "CN=e2e" -alias e2e -keystore e2e.jks -storepass android -keypass android
-          SIGN="--ks e2e.jks --ks-key-alias e2e"
+          SIGN_ARGS="--ks e2e.jks --ks-key-alias e2e"
         fi
-        npx @expo/repack-app -p ${{ inputs.platform }} --source-app source/* $SIGN
+        npx @expo/repack-app -p ${{ inputs.platform }} --source-app source/* $SIGN_ARGS
         echo "args=--path $PWD/repacked.${{ inputs.platform == 'ios' && 'app' || 'apk' }}" >> "$GITHUB_OUTPUT"
 
     - name: Install Maestro
