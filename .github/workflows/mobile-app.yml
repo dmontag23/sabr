@@ -23,6 +23,8 @@ defaults:
 
 env:
   HUSKY: "0"
+  MAESTRO_CLI_NO_ANALYTICS: true
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
   MAESTRO_MAIL_PROVIDER: ${{ github.event_name == 'push' && 'resend' || 'mailpit' }}
 
 jobs:
@@ -30,8 +32,7 @@ jobs:
     name: Static checks and unit/integration tests 🧪
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-app
 
@@ -58,8 +59,7 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-e2e-tests
         id: setup-e2e-tests
@@ -70,15 +70,12 @@ jobs:
         id: install-simulator
         run: |
           SIM_ID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
-          echo "SIM_ID=${SIM_ID}" >> "$GITHUB_OUTPUT"
+          echo "sim-id=$SIM_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Install EAS Build
-        run: eas build:run -p ios --simulator ${{ steps.install-simulator.outputs.SIM_ID }} ${{ steps.setup-e2e-tests.outputs.run-args }}
+      - name: Install EAS build
+        run: eas build:run -p ios --simulator ${{ steps.install-simulator.outputs.sim-id }} ${{ steps.setup-e2e-tests.outputs.run-args }}
 
       - name: Run Maestro on iOS simulator
-        env:
-          MAESTRO_CLI_NO_ANALYTICS: true
-          MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-test-artifacts
@@ -96,8 +93,7 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-e2e-tests
         id: setup-e2e-tests
@@ -113,10 +109,6 @@ jobs:
 
       - name: Run Maestro on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
-        env:
-          MAESTRO_CLI_NO_ANALYTICS: true
-          MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         with:
           api-level: 34
           arch: x86_64
