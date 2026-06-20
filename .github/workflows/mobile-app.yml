@@ -175,15 +175,15 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 21
+      # - name: Set up JDK
+      #   uses: actions/setup-java@v5
+      #   with:
+      #     distribution: temurin
+      #     java-version: 21
 
       # Used to cache Gradle and make builds faster
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
+      # - name: Set up Gradle
+      #   uses: gradle/actions/setup-gradle@v6
 
       # - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} APK
       #   run: ./android/gradlew -p android assemble${VARIANT^} -PreactNativeArchitectures=x86_64
