@@ -29,6 +29,15 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-dev-client",
+        {
+          "defaultLaunchURL": "http://localhost:8081",
+          "android": { "defaultLaunchURL": "http://10.0.2.2:8081" },
+          "skipOnboarding": true,
+          "showMenuAtLaunch": false
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",

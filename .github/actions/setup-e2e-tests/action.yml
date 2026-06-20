@@ -36,7 +36,7 @@ runs:
       uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
       with:
         # TODO: CHOOSE PROFILE BASED ON PR, MERGE TO DEVELOP, ETC
-        profile: staging
+        profile: development
         working-directory: app
         # TODO: REMOVE THE LINE BELOW!!!
         platform: android
@@ -48,7 +48,7 @@ runs:
       # TODO: Build based on PR, merge to develop, etc!!!
       shell: bash
       run: |
-        BUILD_ID=$(eas build --non-interactive --profile=staging -p android --json | jq -r '.[0].id')
+        BUILD_ID=$(eas build --non-interactive --profile=development -p android --json | jq -r '.[0].id')
         echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
     - name: Install Maestro
@@ -71,8 +71,8 @@ runs:
         echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
         echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
 
-    # - name: Start Metro
-    #   if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-    #   shell: bash
-    #   working-directory: app
-    #   run: nohup pnpm start &
+    - name: Start Metro
+      if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
+      shell: bash
+      working-directory: app
+      run: nohup pnpm start &
