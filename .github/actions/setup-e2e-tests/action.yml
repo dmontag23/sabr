@@ -4,23 +4,15 @@ inputs:
   platform:
     description: Platform to run tests on ("ios" or "android")
     required: true
-  expo-token:
-    description: Expo access token
-    required: true
 outputs:
-  build-id:
-    description: EAS build id to install on the emulator
-    value: ${{ steps.build.outputs.BUILD_ID || steps.fingerprint.outputs.android-build-id }}
+  run-args:
+    description: Args for `eas build:run` (either --id <id> or --path <file>)
+    value: ${{ steps.repack.outputs.args || format('--id {0}', steps.build.outputs.BUILD_ID || steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)]) }}
 
 runs:
   using: composite
   steps:
     - uses: ./.github/actions/setup-app
-
-    # - name: Generate native ${{ inputs.platform }} project
-    #   shell: bash
-    #   working-directory: app
-    #   run: pnpm expo prebuild --platform ${{ inputs.platform }}
 
     - name: 🏗 Setup EAS CLI
       uses: expo/expo-github-action@main
@@ -29,27 +21,50 @@ runs:
       with:
         packager: pnpm
         eas-version: latest
-        token: ${{ inputs.expo-token }}
+
+    - name: Resolve EAS profile
+      id: profile
+      shell: bash
+      run: |
+        if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then
+          echo "value=development" >> "$GITHUB_OUTPUT"
+        elif [ "${{ inputs.platform }}" = "ios" ]; then
+          echo "value=staging-ios-simulator" >> "$GITHUB_OUTPUT"
+        else
+          echo "value=staging" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Get fingerprint
       id: fingerprint
       uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
       with:
-        # TODO: CHOOSE PROFILE BASED ON PR, MERGE TO DEVELOP, ETC
-        profile: development
+        profile: ${{ steps.profile.outputs.value }}
         working-directory: app
-        # TODO: REMOVE THE LINE BELOW!!!
-        platform: android
+        platform: ${{ inputs.platform }}
 
     - name: EAS Build
-      if: ${{ steps.fingerprint.outputs.android-build-id == '' }}
+      if: ${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] == '' }}
       id: build
       working-directory: app
       # TODO: Build based on PR, merge to develop, etc!!!
       shell: bash
       run: |
-        BUILD_ID=$(eas build --non-interactive --profile=development -p android --json | jq -r '.[0].id')
+        BUILD_ID=$(eas build --non-interactive --profile=${{ steps.profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
         echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_OUTPUT"
+
+    - name: Repack JS into release build
+      if: ${{ steps.profile.outputs.value != 'development' && steps.build.outputs.BUILD_ID == '' }}
+      id: repack
+      working-directory: app
+      shell: bash
+      run: |
+        mkdir source && (cd source && eas build:download --non-interactive --build-id "${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] }}")
+        if [ "${{ inputs.platform }}" = "android" ]; then
+          keytool -genkeypair -keyalg RSA -validity 10000 -dname "CN=e2e" -alias e2e -keystore e2e.jks -storepass android -keypass android
+          SIGN="--ks e2e.jks --ks-key-alias e2e"
+        fi
+        npx @expo/repack-app -p ${{ inputs.platform }} --source-app source/* $SIGN
+        echo "args=--path $PWD/repacked.${{ inputs.platform == 'ios' && 'app' || 'apk' }}" >> "$GITHUB_OUTPUT"
 
     - name: Install Maestro
       shell: bash
