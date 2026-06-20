@@ -201,16 +201,10 @@ jobs:
           script: |
             if [ "$VARIANT" = "debug" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
 
-            # EAS-native: download the native shell for this build id; prints its local path
-            SOURCE_APK=$(eas build:download --build-id ${{ steps.setup-e2e-tests.outputs.build-id }} \
-              --json --non-interactive | jq -r '.path')
-
-            # Inject this PR's JS (bundled here -> EXPO_PUBLIC_* = localhost) + re-sign
-            npx @expo/repack-app --platform android --source-app "$SOURCE_APK" -o repacked.apk \
-              --ks ~/.android/debug.keystore --ks-pass pass:android \
-              --ks-key-alias androiddebugkey --ks-key-pass pass:android
-
-            eas build:run -p android --path repacked.apk
+            SOURCE_APK=$(eas build:download --build-id ${{ steps.setup-e2e-tests.outputs.build-id }} --json --non-interactive | jq -r '.path')
+            npx @expo/repack-app --platform android --source-app "$SOURCE_APK" -o repacked.apk --ks ~/.android/debug.keystore --ks-pass pass:android --ks-key-alias androiddebugkey --ks-key-pass pass:android
+            adb install -r repacked.apk
+            pnpm test:e2e
 
             pnpm test:e2e
 
