@@ -52,7 +52,7 @@ const extractMailpitEmailContent = () => {
 const poll = (
   requestFn,
   shouldStopPolling,
-  { attempt = 1, maxAttempts = 5000 } = {},
+  { attempt = 1, maxAttempts = 25 } = {},
 ) => {
   const value = requestFn();
   if (shouldStopPolling(value)) return value;
