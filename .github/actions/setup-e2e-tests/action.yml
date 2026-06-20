@@ -54,8 +54,8 @@ runs:
       working-directory: app
       shell: bash
       run: |
-        mkdir source && (cd source && eas build:download --non-interactive --build-id "${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] }}")
-        npx @expo/repack-app -p ${{ inputs.platform }} --source-app source/*
+        APP_PATH=$(eas build:download --non-interactive --build-id "${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] }}" --json | jq -r '.path')
+        npx @expo/repack-app -p ${{ inputs.platform }} --source-app "$APP_PATH"
         echo "args=--path $PWD/repacked.${{ inputs.platform == 'ios' && 'app' || 'apk' }}" >> "$GITHUB_OUTPUT"
 
     - name: Install Maestro
