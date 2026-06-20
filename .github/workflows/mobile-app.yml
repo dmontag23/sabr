@@ -201,10 +201,9 @@ jobs:
           script: |
             if [ "$VARIANT" = "debug" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
 
+            keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
             npx @expo/repack-app --platform android --source-app "$(eas build:download --build-id ${{ steps.setup-e2e-tests.outputs.build-id }} --json --non-interactive | jq -r '.path')" -o repacked.apk --ks ~/.android/debug.keystore --ks-pass pass:android --ks-key-alias androiddebugkey --ks-key-pass pass:android
             adb install -r repacked.apk
-            pnpm test:e2e
-
             pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-test-artifacts
