@@ -45,8 +45,8 @@ runs:
       working-directory: app
       shell: bash
       run: |
-        build-id=$(eas build --non-interactive --profile=${{ steps.eas-profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
-        echo "build-id=$build-id" >> "$GITHUB_OUTPUT"
+        BUILD_ID=$(eas build --non-interactive --profile=${{ steps.eas-profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
+        echo "build-id=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
     - name: Repack JS into release build
       if: ${{ steps.eas-profile.outputs.value != 'development' && steps.build.outputs.build-id == '' }}
@@ -55,7 +55,7 @@ runs:
       shell: bash
       run: |
         mkdir source && (cd source && eas build:download --non-interactive --build-id "${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] }}")
-        npx @expo/repack-app -p ${{ inputs.platform }} --source-app source/* $SIGN_ARGS
+        npx @expo/repack-app -p ${{ inputs.platform }} --source-app source/*
         echo "args=--path $PWD/repacked.${{ inputs.platform == 'ios' && 'app' || 'apk' }}" >> "$GITHUB_OUTPUT"
 
     - name: Install Maestro
