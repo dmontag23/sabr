@@ -73,7 +73,7 @@ jobs:
           echo "sim-id=$SIM_ID" >> "$GITHUB_OUTPUT"
 
       - name: Install EAS build
-        run: eas build:run -p ios --simulator ${{ steps.install-simulator.outputs.sim-id }} ${{ steps.setup-e2e-tests.outputs.run-args }}
+        run: eas build:run -p ios --simulator ${{ steps.install-simulator.outputs.sim-id }} ${{ steps.setup-e2e-tests.outputs.eas-build-run-args }}
 
       - name: Run Maestro on iOS simulator
         run: pnpm test:e2e
@@ -115,7 +115,7 @@ jobs:
           working-directory: app
           script: |
             if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
-            eas build:run -p android ${{ steps.setup-e2e-tests.outputs.run-args }}
+            eas build:run -p android ${{ steps.setup-e2e-tests.outputs.eas-build-run-args }}
             pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-test-artifacts

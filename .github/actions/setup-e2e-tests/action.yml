@@ -5,7 +5,7 @@ inputs:
     description: Platform to run tests on ("ios" or "android")
     required: true
 outputs:
-  run-args:
+  eas-build-run-args:
     description: Args for `eas build:run` (either --id <id> or --path <file>)
     value: ${{ steps.repack.outputs.args || format('--id {0}', steps.build.outputs.build-id || steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)]) }}
 
