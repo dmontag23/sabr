@@ -81,6 +81,6 @@ Goal: rebuild in dependency order.
 ## Verification checklist after any DR
 
 - `terraform plan` does not contain any changes.
-- The `sabr` repository settings match the terraform.
+- The `sabr` repository settings match the terraform. Ensure any repo-level variables have been set.
 - `staging` and `production` environments exist with expected branch policies.
 - Every environment secret and variable declared in [secrets.tf](./secrets.tf) is present and has a value in both the `staging` and `production` environments.

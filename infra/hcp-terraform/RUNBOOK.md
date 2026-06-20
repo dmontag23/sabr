@@ -54,6 +54,12 @@ In `infra/hcp-terraform`, create a `secrets.auto.tfvars` file. In that file, pas
 github_token = "<your github token>"
 ```
 
+Next, create an Expo access token for a robot user:
+
+1. Go to [expo.dev](https://expo.dev/) → Access tokens → + Add robot.
+2. Generate a new token. The name does not matter. The token should have "Developer" permissions.
+3. Copy the value for pasting into `secrets.auto.tfvars` (see below).
+
 Then, create a personal access token in Supabase:
 
 1. Go **Dashboard → Account preferences → Access Tokens**
@@ -69,10 +75,11 @@ Next, create an API key in Resend:
 In `secrets.auto.tfvars`, paste the values as:
 
 ```hcl
-supabase_access_token    = "<token>"
-supabase_organization_id = "<org_id>"
-resend_api_key           = "<resend api key>"
+expo_token                            = "<expo token>"
 production_required_reviewer_username = "<github prod approver username>"
+resend_api_key                        = "<resend api key>"
+supabase_access_token                 = "<supabase token>"
+supabase_organization_id              = "<org_id>"
 ```
 
 `supabase_access_token` is shared by all Supabase workspaces and passed to the GitHub stack.
@@ -159,6 +166,7 @@ Each Supabase workspace should also have its own `project_name` Terraform variab
 
 - the `GITHUB_TOKEN` environment variable
 - the `TFE_TOKEN` environment variable
+- the `expo_token` terraform variable
 - the `supabase_access_token` terraform variable
 - the `production_required_reviewer_username` terraform variable
 

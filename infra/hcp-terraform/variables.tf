@@ -1,3 +1,10 @@
+variable "expo_token" {
+  description = "Expo access token."
+  type        = string
+  ephemeral   = true
+  sensitive   = true
+}
+
 variable "github_token" {
   description = "GitHub token with permission to manage the sabr repository."
   type        = string
