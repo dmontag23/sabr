@@ -6,6 +6,12 @@ resource "github_actions_environment_secret" "resend_api_key" {
   value       = data.tfe_outputs.resend.values["e2e_tests_api_key"]
 }
 
+resource "github_actions_secret" "expo_token" {
+  repository  = github_repository.sabr.name
+  secret_name = "EXPO_TOKEN"
+  value       = var.expo_token
+}
+
 resource "github_actions_secret" "supabase_access_token" {
   repository  = github_repository.sabr.name
   secret_name = "SUPABASE_ACCESS_TOKEN"

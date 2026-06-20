@@ -30,6 +30,17 @@ resource "tfe_variable" "production_required_reviewer_username" {
   value = var.production_required_reviewer_username
 }
 
+resource "tfe_variable" "expo_token_terraform" {
+  key          = "expo_token"
+  category     = "terraform"
+  sensitive    = true
+  workspace_id = tfe_workspace.github.id
+  description  = "Expo access token."
+
+  value_wo         = var.expo_token
+  value_wo_version = 1
+}
+
 resource "tfe_variable" "supabase_access_token_terraform" {
   key          = "supabase_access_token"
   category     = "terraform"
