@@ -201,6 +201,8 @@ jobs:
           script: |
             if [ "$VARIANT" = "debug" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
             eas build:run --id ${{ steps.setup-e2e-tests.outputs.build-id }} -p android
+            adb shell curl -s http://10.0.2.2:8081/status; echo
+            adb shell curl -s http://localhost:8081/status; echo   # expect: packager-status:running
             pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-test-artifacts
