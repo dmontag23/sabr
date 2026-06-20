@@ -7,7 +7,7 @@ inputs:
 outputs:
   run-args:
     description: Args for `eas build:run` (either --id <id> or --path <file>)
-    value: ${{ steps.repack.outputs.args || format('--id {0}', steps.build.outputs.BUILD_ID || steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)]) }}
+    value: ${{ steps.repack.outputs.args || format('--id {0}', steps.build.outputs.build-id || steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)]) }}
 
 runs:
   using: composite
@@ -49,11 +49,11 @@ runs:
       # TODO: Build based on PR, merge to develop, etc!!!
       shell: bash
       run: |
-        BUILD_ID=$(eas build --non-interactive --profile=${{ steps.profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
-        echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_OUTPUT"
+        build-id=$(eas build --non-interactive --profile=${{ steps.profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
+        echo "build-id=$build-id" >> "$GITHUB_OUTPUT"
 
     - name: Repack JS into release build
-      if: ${{ steps.profile.outputs.value != 'development' && steps.build.outputs.BUILD_ID == '' }}
+      if: ${{ steps.profile.outputs.value != 'development' && steps.build.outputs.build-id == '' }}
       id: repack
       working-directory: app
       shell: bash
