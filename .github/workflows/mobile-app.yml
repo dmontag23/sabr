@@ -23,14 +23,16 @@ defaults:
 
 env:
   HUSKY: "0"
+  MAESTRO_CLI_NO_ANALYTICS: true
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
+  MAESTRO_MAIL_PROVIDER: ${{ github.event_name == 'push' && 'resend' || 'mailpit' }}
 
 jobs:
   static-checks-and-unit-integration-tests:
     name: Static checks and unit/integration tests 🧪
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-app
 
@@ -43,83 +45,37 @@ jobs:
       - name: Unit and integration tests
         run: pnpm test:unit-integration
 
-  resolve-variables-for-environment:
-    name: Resolve variables for e2e test environment
-    runs-on: ubuntu-latest
-    outputs:
-      ENVIRONMENT: ${{ steps.resolve.outputs.ENVIRONMENT }}
-      MAESTRO_MAIL_PROVIDER: ${{ steps.resolve.outputs.MAESTRO_MAIL_PROVIDER }}
-      VARIANT: ${{ steps.resolve.outputs.VARIANT }}
-    steps:
-      - id: resolve
-        working-directory: .
-        run: |
-          # When merging to the "develop" or "main" branches
-          if [[ "${{ github.event_name }}" == "push" && ("${{ github.ref }}" == "refs/heads/develop" || "${{ github.ref }}" == "refs/heads/main") ]]; then
-            # Run e2e tests on the staging environment
-            echo "ENVIRONMENT=staging" >> "$GITHUB_OUTPUT"
-            echo "MAESTRO_MAIL_PROVIDER=resend"  >> "$GITHUB_OUTPUT"
-            echo "VARIANT=release" >> "$GITHUB_OUTPUT"
-          else
-            # Run tests on a local supabase instance
-            echo "ENVIRONMENT=" >> "$GITHUB_OUTPUT"
-            echo "MAESTRO_MAIL_PROVIDER=mailpit" >> "$GITHUB_OUTPUT"
-            echo "VARIANT=debug" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Print variables
-        working-directory: .
-        run: echo '${{ toJSON(steps.resolve.outputs) }}'
-
   e2e-tests-ios:
     name: E2E tests - IOS 📱
     runs-on: macos-26
     # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
     # The following "if" statement should be removed once Docker is supported on macos-26 runners.
     # See https://github.com/actions/runner-images/issues/13505
-    if: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER != 'mailpit' }}
-    needs: resolve-variables-for-environment
-    environment: ${{ needs.resolve-variables-for-environment.outputs.ENVIRONMENT }}
+    if: ${{ github.event_name == 'push' }}
+    environment: ${{ github.event_name == 'push' && 'staging' || '' }}
     env:
       EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
-      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
-      VARIANT: ${{ needs.resolve-variables-for-environment.outputs.VARIANT == 'release' && 'Release' || 'Debug' }}
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-e2e-tests
+        id: setup-e2e-tests
         with:
           platform: ios
 
       - name: Install simulator
+        id: install-simulator
         run: |
-          UDID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
-          echo "UDID=${UDID}" >> "$GITHUB_ENV"
+          SIM_ID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
+          echo "sim-id=$SIM_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} simulator .app
-        run: |
-          xcodebuild \
-            -workspace "ios/sabr.xcworkspace" \
-            -scheme sabr \
-            -configuration ${VARIANT} \
-            -sdk iphonesimulator \
-            -destination "id=${UDID}" \
-            -derivedDataPath ios/build \
-            build
-
-      - name: Launch simulator
-        run: xcrun simctl boot "${UDID}"
-
-      - name: Install app onto simulator
-        run: xcrun simctl install booted ios/build/Build/Products/${VARIANT}-iphonesimulator/sabr.app
+      - name: Install EAS build
+        run: eas build:run -p ios --simulator ${{ steps.install-simulator.outputs.sim-id }} ${{ steps.setup-e2e-tests.outputs.eas-build-run-args }}
 
       - name: Run Maestro on iOS simulator
-        env:
-          MAESTRO_CLI_NO_ANALYTICS: true
-          MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-test-artifacts
@@ -130,19 +86,17 @@ jobs:
   e2e-tests-android:
     name: E2E tests - Android 🤖
     runs-on: ubuntu-latest
-    needs: resolve-variables-for-environment
-    environment: ${{ needs.resolve-variables-for-environment.outputs.ENVIRONMENT }}
+    environment: ${{ github.event_name == 'push' && 'staging' || '' }}
     env:
       EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
-      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-variables-for-environment.outputs.MAESTRO_MAIL_PROVIDER }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
-      VARIANT: ${{ needs.resolve-variables-for-environment.outputs.VARIANT }}
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-e2e-tests
+        id: setup-e2e-tests
         with:
           platform: android
 
@@ -153,31 +107,15 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 21
-
-      # Used to cache Gradle and make builds faster
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Build ${{ needs.resolve-variables-for-environment.outputs.VARIANT }} APK
-        run: ./android/gradlew -p android assemble${VARIANT^} -PreactNativeArchitectures=x86_64
-
       - name: Run Maestro on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
-        env:
-          MAESTRO_CLI_NO_ANALYTICS: true
-          MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         with:
           api-level: 34
           arch: x86_64
           working-directory: app
           script: |
-            if [ "$VARIANT" = "debug" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
-            adb install "android/app/build/outputs/apk/${VARIANT}/app-${VARIANT}.apk"
+            if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
+            eas build:run -p android ${{ steps.setup-e2e-tests.outputs.eas-build-run-args }}
             pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-test-artifacts

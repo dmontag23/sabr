@@ -4,16 +4,59 @@ inputs:
   platform:
     description: Platform to run tests on ("ios" or "android")
     required: true
+outputs:
+  eas-build-run-args:
+    description: Args for `eas build:run` (either --id <id> or --path <file>)
+    value: ${{ steps.repack.outputs.args || format('--id {0}', steps.build.outputs.build-id || steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)]) }}
 
 runs:
   using: composite
   steps:
     - uses: ./.github/actions/setup-app
 
-    - name: Generate native ${{ inputs.platform }} project
+    - name: 🏗 Setup EAS CLI
+      uses: expo/expo-github-action@main
+      with:
+        eas-version: latest
+
+    - name: Resolve EAS profile
+      id: eas-profile
       shell: bash
+      run: |
+        if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then
+          echo "value=development" >> "$GITHUB_OUTPUT"
+        elif [ "${{ inputs.platform }}" = "ios" ]; then
+          echo "value=staging-ios-simulator" >> "$GITHUB_OUTPUT"
+        else
+          echo "value=staging" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Get app fingerprint
+      id: fingerprint
+      uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
+      with:
+        profile: ${{ steps.eas-profile.outputs.value }}
+        working-directory: app
+        platform: ${{ inputs.platform }}
+
+    - name: Build app on EAS Cloud
+      if: ${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] == '' }}
+      id: build
       working-directory: app
-      run: pnpm expo prebuild --platform ${{ inputs.platform }}
+      shell: bash
+      run: |
+        BUILD_ID=$(eas build --non-interactive --profile=${{ steps.eas-profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
+        echo "build-id=$BUILD_ID" >> "$GITHUB_OUTPUT"
+
+    - name: Repack JS into release build
+      if: ${{ steps.eas-profile.outputs.value != 'development' && steps.build.outputs.build-id == '' }}
+      id: repack
+      working-directory: app
+      shell: bash
+      run: |
+        mkdir source && (cd source && eas build:download --non-interactive --build-id "${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] }}")
+        npx @expo/repack-app -p ${{ inputs.platform }} --source-app source/*
+        echo "args=--path $PWD/repacked.${{ inputs.platform == 'ios' && 'app' || 'apk' }}" >> "$GITHUB_OUTPUT"
 
     - name: Install Maestro
       shell: bash

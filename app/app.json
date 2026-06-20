@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.sabr"
+      "bundleIdentifier": "app.sabr",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +29,15 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-dev-client",
+        {
+          "defaultLaunchURL": "http://localhost:8081",
+          "android": { "defaultLaunchURL": "http://10.0.2.2:8081" },
+          "skipOnboarding": true,
+          "showMenuAtLaunch": false
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -51,6 +63,10 @@
         "projectId": "749263d8-c462-4279-92aa-19fcda4a2a2f"
       }
     },
-    "owner": "dmontag23"
+    "owner": "dmontag23",
+    "runtimeVersion": { "policy": "fingerprint" },
+    "updates": {
+      "url": "https://u.expo.dev/749263d8-c462-4279-92aa-19fcda4a2a2f"
+    }
   }
 }
