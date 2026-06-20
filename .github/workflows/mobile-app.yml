@@ -201,8 +201,7 @@ jobs:
           script: |
             if [ "$VARIANT" = "debug" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
 
-            SOURCE_APK=$(eas build:download --build-id ${{ steps.setup-e2e-tests.outputs.build-id }} --json --non-interactive | jq -r '.path')
-            npx @expo/repack-app --platform android --source-app "$SOURCE_APK" -o repacked.apk --ks ~/.android/debug.keystore --ks-pass pass:android --ks-key-alias androiddebugkey --ks-key-pass pass:android
+            npx @expo/repack-app --platform android --source-app "$(eas build:download --build-id ${{ steps.setup-e2e-tests.outputs.build-id }} --json --non-interactive | jq -r '.path')" -o repacked.apk --ks ~/.android/debug.keystore --ks-pass pass:android --ks-key-alias androiddebugkey --ks-key-pass pass:android
             adb install -r repacked.apk
             pnpm test:e2e
 
