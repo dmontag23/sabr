@@ -19,22 +19,13 @@ const callAPI = (url, headers) => {
   return json(apiResponse.body);
 };
 
-const findMailpitTestEmail = (receivedEmails) =>
-  receivedEmails.find(({ To }) =>
-    To.some(({ Address }) => Address === output.auth.email.recipient),
-  );
-
 const extractMailpitEmailContent = () => {
   const mailpitBaseURL = `${MAESTRO_MAILPIT_URL}/api/v1`;
-  // const receivedEmails = callAPI(`${mailpitBaseURL}/messages`).messages;
+  const receivedEmails = callAPI(`${mailpitBaseURL}/messages`).messages;
 
-  const receivedEmails = poll(
-    () => callAPI(`${mailpitBaseURL}/messages`).messages,
-    // Must ensure email recipient is unique per test to avoid race conditions here
-    findMailpitTestEmail,
-  );
-
-  const emailId = findMailpitTestEmail(receivedEmails).ID;
+  const emailId = receivedEmails.find(({ To }) =>
+    To.some(({ Address }) => Address === output.auth.email.recipient),
+  ).ID;
 
   const { Subject, HTML, From } = callAPI(
     `${mailpitBaseURL}/message/${emailId}`,
