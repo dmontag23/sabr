@@ -55,10 +55,6 @@ runs:
       shell: bash
       run: |
         mkdir source && (cd source && eas build:download --non-interactive --build-id "${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] }}")
-        if [ "${{ inputs.platform }}" = "android" ]; then
-          keytool -genkeypair -keyalg RSA -validity 10000 -dname "CN=e2e" -alias e2e -keystore e2e.jks -storepass android -keypass android
-          SIGN_ARGS="--ks e2e.jks --ks-key-alias e2e"
-        fi
         npx @expo/repack-app -p ${{ inputs.platform }} --source-app source/* $SIGN_ARGS
         echo "args=--path $PWD/repacked.${{ inputs.platform == 'ios' && 'app' || 'apk' }}" >> "$GITHUB_OUTPUT"
 
