@@ -50,7 +50,7 @@ appId: app.sabr
 # The same dialog is not present on Android.
 - runFlow:
     when:
-      visible: 'Open in "Sabr"'
+      visible: 'Open in "sabr"'
     commands:
       - tapOn: Open
 - assertVisible: "Home"
