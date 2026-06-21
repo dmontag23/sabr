@@ -1,0 +1,10 @@
+name: Setup EAS toolchain
+description: Install app deps and the EAS CLI
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup-app
+
+    - uses: expo/expo-github-action@main
+      with:
+        eas-version: latest

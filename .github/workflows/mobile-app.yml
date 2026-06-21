@@ -4,8 +4,12 @@ on:
     # Assumes all PRs to the main branch will be from the develop branch
     branches-ignore: [main]
     paths:
+      - .github/actions/build-app/action.yml
+      - .github/actions/create-and-push-env-file/action.yml
+      - .github/actions/repack-app/action.yml
       - .github/actions/setup-app/action.yml
       - .github/actions/setup-e2e-tests/action.yml
+      - .github/actions/setup-eas/action.yml
       - .github/actions/upload-maestro-test-artifacts/action.yml
       - .github/workflows/mobile-app.yml
       - app/**
@@ -22,12 +26,13 @@ defaults:
     working-directory: app
 
 env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
   HUSKY: "0"
   MAESTRO_CLI_NO_ANALYTICS: true
   MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
-  MAESTRO_MAIL_PROVIDER: ${{ github.event_name == 'push' && 'resend' || 'mailpit' }}
 
 jobs:
+  # ---------------- Static checks ----------------
   static-checks-and-unit-integration-tests:
     name: Static checks and unit/integration tests 🧪
     runs-on: ubuntu-latest
@@ -45,58 +50,87 @@ jobs:
       - name: Unit and integration tests
         run: pnpm test:unit-integration
 
-  e2e-tests-ios:
-    name: E2E tests - IOS 📱
-    runs-on: macos-26
-    # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
-    # The following "if" statement should be removed once Docker is supported on macos-26 runners.
-    # See https://github.com/actions/runner-images/issues/13505
-    if: ${{ github.event_name == 'push' }}
-    environment: ${{ github.event_name == 'push' && 'staging' || '' }}
-    env:
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
+  # ---------------- Config ----------------
+  resolve-environment:
+    name: Resolve environment and associated variables 🧭
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
+      github-environment: ${{ steps.resolve.outputs.github-environment }}
+    steps:
+      - id: resolve
+        # working-directory: ${{ github.workspace }}
+        run: |
+          echo "environment=${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'staging' || 'development' }}" >> "$GITHUB_OUTPUT"
+          echo "github-environment=${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'staging' }}" >> "$GITHUB_OUTPUT"
+
+  # ---------------- Build ----------------
+  build-apps:
+    name: Build apps 🏗
+    runs-on: ubuntu-latest
+    needs: resolve-environment
+    environment: ${{ needs.resolve-environment.outputs.github-environment }}
+    outputs:
+      android-build-id: ${{ steps.build.outputs.android-build-id }}
+      ios-build-id: ${{ steps.build.outputs.ios-build-id }}
+      is-fresh-build: ${{ steps.build.outputs.is-fresh-build }}
     steps:
       - uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup-e2e-tests
-        id: setup-e2e-tests
+      - uses: ./.github/actions/build-app
+        id: build
         with:
+          environment: ${{ needs.resolve-environment.outputs.environment }}
           env-vars-json: ${{ toJSON(vars) }}
-          platform: ios
 
-      - name: Install simulator
-        id: install-simulator
-        run: |
-          SIM_ID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
-          echo "sim-id=$SIM_ID" >> "$GITHUB_OUTPUT"
+  # iOS device builds cannot be installed on a simulator. Simulators (used for e2e tests) need their own build.
+  build-ios-simulator:
+    name: Build iOS simulator app 🏗
+    # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
+    # The following "if" statement should be "if: ${{ needs.resolve-environment.outputs.environment != 'production' }}" once Docker is supported on macos-26 runners.
+    # See https://github.com/actions/runner-images/issues/13505
+    needs: resolve-environment
+    if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-environment.outputs.github-environment }}
+    outputs:
+      build-id: ${{ steps.build.outputs.ios-build-id }}
+      is-fresh-build: ${{ steps.build.outputs.is-fresh-build }}
+    steps:
+      - uses: actions/checkout@v6
 
-      - name: Install EAS build
-        run: eas build:run -p ios --simulator ${{ steps.install-simulator.outputs.sim-id }} ${{ steps.setup-e2e-tests.outputs.eas-build-run-args }}
-
-      - name: Run Maestro on iOS simulator
-        run: pnpm test:e2e
-
-      - uses: ./.github/actions/upload-maestro-test-artifacts
-        if: failure()
+      - uses: ./.github/actions/build-app
+        id: build
         with:
-          name: ios
+          is-ios-simulator-build: "true"
+          environment: ${{ needs.resolve-environment.outputs.environment }}
+          env-vars-json: ${{ toJSON(vars) }}
 
+  # ---------------- Test ----------------
   e2e-tests-android:
     name: E2E tests - Android 🤖
+    needs: [resolve-environment, build-apps]
+    if: ${{ needs.resolve-environment.outputs.environment != 'production' }}
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'push' && 'staging' || '' }}
+    environment: ${{ needs.resolve-environment.outputs.github-environment }}
     env:
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.environment == 'development' && 'mailpit' || 'resend' }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-e2e-tests
-        id: setup-e2e-tests
         with:
-          env-vars-json: ${{ toJSON(vars) }}
+          environment: ${{ needs.resolve-environment.outputs.environment }}
+
+      - uses: ./.github/actions/repack-app
+        id: repack
+        # Only a reused build needs to repack the JS into it; a fresh build already has the current JS
+        if: ${{ needs.resolve-environment.outputs.environment != 'development' && needs.build-apps.outputs.is-fresh-build == 'false' }}
+        with:
           platform: android
+          build-id: ${{ needs.build-apps.outputs.android-build-id }}
+          env-vars-json: ${{ toJSON(vars) }}
 
       # See https://github.com/ReactiveCircus/android-emulator-runner#running-hardware-accelerated-emulators-on-linux-runners
       - name: Enable KVM group perms
@@ -112,11 +146,56 @@ jobs:
           arch: x86_64
           working-directory: app
           script: |
-            if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
-            eas build:run -p android ${{ steps.setup-e2e-tests.outputs.eas-build-run-args }}
+            if [ "${{ needs.resolve-environment.outputs.environment }}" = "development" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
+            eas build:run -p android ${{ steps.repack.outputs.path && format('--path {0}', steps.repack.outputs.path) || format('--id {0}', needs.build-apps.outputs.android-build-id) }}
             pnpm test:e2e
 
       - uses: ./.github/actions/upload-maestro-test-artifacts
         if: failure()
         with:
           name: android
+
+  e2e-tests-ios:
+    name: E2E tests - IOS 📱
+    runs-on: macos-26
+    # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
+    # The following "if" statement should be 'if: ${{ needs.resolve-environment.outputs.environment != 'production' }}' once Docker is supported on macos-26 runners.
+    # See https://github.com/actions/runner-images/issues/13505
+    needs: [resolve-environment, build-ios-simulator]
+    if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
+    environment: ${{ needs.resolve-environment.outputs.github-environment }}
+    env:
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.environment == 'development' && 'mailpit' || 'resend' }}
+      MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-e2e-tests
+        with:
+          environment: ${{ needs.resolve-environment.outputs.environment }}
+
+      - uses: ./.github/actions/repack-app
+        id: repack
+        # Only a reused build needs to repack the JS into it; a fresh build already has the current JS
+        if: ${{ needs.resolve-environment.outputs.environment != 'development' && needs.build-ios-simulator.outputs.is-fresh-build == 'false' }}
+        with:
+          platform: ios
+          build-id: ${{ needs.build-ios-simulator.outputs.build-id }}
+          env-vars-json: ${{ toJSON(vars) }}
+
+      - name: Install simulator
+        id: install-simulator
+        run: |
+          SIM_ID="$(xcrun simctl create "iPhone 12" com.apple.CoreSimulator.SimDeviceType.iPhone-12)"
+          echo "sim-id=$SIM_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Install EAS build
+        run: eas build:run -p ios --simulator ${{ steps.install-simulator.outputs.sim-id }} ${{ steps.repack.outputs.path && format('--path {0}', steps.repack.outputs.path) || format('--id {0}', needs.build-ios-simulator.outputs.build-id) }}
+
+      - name: Run Maestro on iOS simulator
+        run: pnpm test:e2e
+
+      - uses: ./.github/actions/upload-maestro-test-artifacts
+        if: failure()
+        with:
+          name: ios

@@ -1,97 +1,14 @@
 name: Setup e2e tests
-description: Prerequisites for running e2e tests on a mobile emulator
+description: Install the EAS toolchain + Maestro, and for the development environment start a local Supabase instance + Metro
 inputs:
-  env-vars-json:
-    description: JSON that should contain all EXPO_PUBLIC_* environment variable values.
+  environment:
+    description: The environment in which the tests run.
     required: true
-  platform:
-    description: Platform to run tests on ("ios" or "android")
-    required: true
-outputs:
-  eas-build-run-args:
-    description: Args for `eas build:run` (either --id <id> or --path <file>)
-    value: ${{ steps.repack.outputs.args || format('--id {0}', steps.build.outputs.build-id || steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)]) }}
 
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-app
-
-    - name: 🏗 Setup EAS CLI
-      uses: expo/expo-github-action@main
-      with:
-        eas-version: latest
-
-    - name: Resolve EAS profile
-      id: eas-profile
-      shell: bash
-      run: |
-        if [ "$MAESTRO_MAIL_PROVIDER" = "mailpit" ]; then
-          echo "value=development" >> "$GITHUB_OUTPUT"
-        elif [ "${{ inputs.platform }}" = "ios" ]; then
-          echo "value=staging-ios-simulator" >> "$GITHUB_OUTPUT"
-        else
-          echo "value=staging" >> "$GITHUB_OUTPUT"
-        fi
-
-    - name: Get app fingerprint
-      id: fingerprint
-      uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
-      with:
-        profile: ${{ steps.eas-profile.outputs.value }}
-        working-directory: app
-        platform: ${{ inputs.platform }}
-
-    - name: Create env file
-      if: env.MAESTRO_MAIL_PROVIDER != 'mailpit'
-      working-directory: app
-      shell: bash
-      env:
-        ENV_VARS_JSON: ${{ inputs.env-vars-json }}
-      run: |
-        # Put every EXPO_PUBLIC_* env variable in the env file
-        echo "$ENV_VARS_JSON" | jq -r '
-          to_entries[]
-          | select(.key | startswith("EXPO_PUBLIC_"))
-          | "\(.key)=\(.value)"' > .env
-
-    - name: Resolve EAS environment
-      if: env.MAESTRO_MAIL_PROVIDER != 'mailpit'
-      id: resolve-eas-environment
-      working-directory: app
-      shell: bash
-      run: |
-        # Resolves the EAS environment from eas.json
-        # Assumes that an "environment" key is present in the eas.json file
-        # and that the environment is only at most one 'extends' level away from its profile.
-        ENVIRONMENT=$(jq -r --arg profile "${{ steps.eas-profile.outputs.value }}" '.build[$profile].environment // .build[.build[$profile].extends].environment' eas.json)
-        echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
-
-    - name: Push env file to EAS Cloud
-      if: env.MAESTRO_MAIL_PROVIDER != 'mailpit'
-      working-directory: app
-      shell: bash
-      run: eas env:push ${{ steps.resolve-eas-environment.outputs.environment }} --path .env --force
-
-    - name: Build app on EAS Cloud
-      if: ${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] == '' }}
-      id: build
-      working-directory: app
-      shell: bash
-      run: |
-        BUILD_ID=$(eas build --non-interactive --profile=${{ steps.eas-profile.outputs.value }} -p ${{ inputs.platform }} --json | jq -r '.[0].id')
-        echo "build-id=$BUILD_ID" >> "$GITHUB_OUTPUT"
-
-    - name: Repack JS into release build
-      if: ${{ steps.eas-profile.outputs.value != 'development' && steps.build.outputs.build-id == '' }}
-      id: repack
-      working-directory: app
-      shell: bash
-      run: |
-        APP_PATH=$(eas build:download --non-interactive --build-id "${{ steps.fingerprint.outputs[format('{0}-build-id', inputs.platform)] }}" --json | jq -r '.path')
-        OUTPUT_PATH="$PWD/repacked.${{ inputs.platform == 'ios' && 'app' || 'apk' }}"
-        npx @expo/repack-app -p ${{ inputs.platform }} --source-app "$APP_PATH" --output "$OUTPUT_PATH"
-        echo "args=--path $OUTPUT_PATH" >> "$GITHUB_OUTPUT"
+    - uses: ./.github/actions/setup-eas
 
     - name: Install Maestro
       shell: bash
@@ -100,11 +17,11 @@ runs:
         echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
     - name: Set up Supabase CLI
-      if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
+      if: ${{ inputs.environment == 'development' }}
       uses: supabase/setup-cli@v2
 
     - name: Start local Supabase instance
-      if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
+      if: ${{ inputs.environment == 'development' }}
       shell: bash
       run: |
         supabase start
@@ -114,7 +31,7 @@ runs:
         echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
 
     - name: Start Metro
-      if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
+      if: ${{ inputs.environment == 'development' }}
       shell: bash
       working-directory: app
       run: nohup pnpm start &
