@@ -54,8 +54,6 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     environment: ${{ github.event_name == 'push' && 'staging' || '' }}
     env:
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
@@ -64,6 +62,7 @@ jobs:
       - uses: ./.github/actions/setup-e2e-tests
         id: setup-e2e-tests
         with:
+          env-vars-json: ${{ toJSON(vars) }}
           platform: ios
 
       - name: Install simulator
@@ -88,8 +87,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'push' && 'staging' || '' }}
     env:
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
@@ -98,6 +95,7 @@ jobs:
       - uses: ./.github/actions/setup-e2e-tests
         id: setup-e2e-tests
         with:
+          env-vars-json: ${{ toJSON(vars) }}
           platform: android
 
       # See https://github.com/ReactiveCircus/android-emulator-runner#running-hardware-accelerated-emulators-on-linux-runners
