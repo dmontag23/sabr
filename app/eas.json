@@ -1,18 +1,20 @@
 {
   "build": {
     "development": {
+      "channel": "development",
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "environment": "development"
     },
     "staging": {
+      "channel": "staging",
       "distribution": "internal",
-      "channel": "staging"
+      "environment": "preview"
     },
     "staging-ios-simulator": {
       "extends": "staging",
       "ios": { "simulator": true }
     },
-    "production": { "channel": "production" }
+    "production": { "channel": "production", "environment": "production" }
   }
 }
