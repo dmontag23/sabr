@@ -6,6 +6,7 @@ on:
     paths:
       - .github/actions/build-app/action.yml
       - .github/actions/create-and-push-env-file/action.yml
+      - .github/actions/deploy/action.yml
       - .github/actions/repack-app/action.yml
       - .github/actions/setup-app/action.yml
       - .github/actions/setup-e2e-tests/action.yml
@@ -71,6 +72,7 @@ jobs:
     needs: resolve-environment
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     outputs:
+      eas-environment: ${{ steps.build.outputs.eas-environment }}
       android-build-id: ${{ steps.build.outputs.android-build-id }}
       ios-build-id: ${{ steps.build.outputs.ios-build-id }}
       is-fresh-build: ${{ steps.build.outputs.is-fresh-build }}
@@ -199,3 +201,63 @@ jobs:
         if: failure()
         with:
           name: ios
+
+  # ---------------- Deploy ----------------
+  deploy-preview:
+    name: Deploy to development 🚀
+    runs-on: ubuntu-latest
+    needs:
+      [
+        static-checks-and-unit-integration-tests,
+        resolve-environment,
+        build-apps,
+      ]
+    if: ${{ needs.resolve-environment.outputs.environment == 'development' }}
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/deploy
+        with:
+          environment: ${{ needs.resolve-environment.outputs.environment }}
+          eas-environment: ${{ needs.build-apps.outputs.eas-environment }}
+
+  deploy-staging:
+    name: Deploy to staging 🚀
+    runs-on: ubuntu-latest
+    needs:
+      [
+        static-checks-and-unit-integration-tests,
+        resolve-environment,
+        build-apps,
+        e2e-tests-android,
+        e2e-tests-ios,
+      ]
+    if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
+    environment: ${{ needs.resolve-environment.outputs.github-environment }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/deploy
+        with:
+          environment: ${{ needs.resolve-environment.outputs.environment }}
+          eas-environment: ${{ needs.build-apps.outputs.eas-environment }}
+
+  deploy-production:
+    name: Deploy to production 🚀
+    runs-on: ubuntu-latest
+    needs:
+      [
+        static-checks-and-unit-integration-tests,
+        resolve-environment,
+        build-apps,
+      ]
+    if: ${{ needs.resolve-environment.outputs.environment == 'production' }}
+    environment: ${{ needs.resolve-environment.outputs.github-environment }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/deploy
+        with:
+          environment: ${{ needs.resolve-environment.outputs.environment }}
+          eas-environment: ${{ needs.build-apps.outputs.eas-environment }}
+          android-build-id: ${{ needs.build-apps.outputs.is-fresh-build == 'true' && needs.build-apps.outputs.android-build-id || '' }}
+          ios-build-id: ${{ needs.build-apps.outputs.is-fresh-build == 'true' && needs.build-apps.outputs.ios-build-id || '' }}
