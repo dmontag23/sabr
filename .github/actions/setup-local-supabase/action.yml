@@ -1,0 +1,14 @@
+name: Setup local Supabase
+description: Start the local Supabase stack and export its variables to the GitHub environment.
+runs:
+  using: composite
+  steps:
+    - uses: supabase/setup-cli@v2
+    - name: Start local Supabase instance
+      shell: bash
+      run: |
+        supabase start
+        eval "$(supabase status -o env)"
+        echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+        echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+        echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"

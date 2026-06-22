@@ -16,19 +16,9 @@ runs:
         curl -fsSL "https://get.maestro.mobile.dev" | bash
         echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
-    - name: Set up Supabase CLI
-      if: ${{ inputs.environment == 'development' }}
-      uses: supabase/setup-cli@v2
-
     - name: Start local Supabase instance
       if: ${{ inputs.environment == 'development' }}
-      shell: bash
-      run: |
-        supabase start
-        eval "$(supabase status -o env)"
-        echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
-        echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
-        echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
+      uses: ./.github/actions/setup-local-supabase
 
     - name: Start Metro
       if: ${{ inputs.environment == 'development' }}

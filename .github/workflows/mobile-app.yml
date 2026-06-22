@@ -11,6 +11,7 @@ on:
       - .github/actions/setup-app/action.yml
       - .github/actions/setup-e2e-tests/action.yml
       - .github/actions/setup-eas/action.yml
+      - .github/actions/setup-local-supabase/action.yml
       - .github/actions/upload-maestro-test-artifacts/action.yml
       - .github/workflows/mobile-app.yml
       - app/**
