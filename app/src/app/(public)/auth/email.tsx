@@ -1,7 +1,8 @@
 import { supabase } from "@/utils/supabase";
 import { ComponentProps, useState } from "react";
-import { View, Button, TextInput } from "react-native";
+import { View, TextInput } from "react-native";
 import { useRouter } from "expo-router";
+import { Button } from "@/components/Button";
 
 const EmailScreen = () => {
   const [email, setEmail] = useState("");
