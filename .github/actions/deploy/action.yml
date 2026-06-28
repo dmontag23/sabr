@@ -23,7 +23,7 @@ runs:
       if: ${{ inputs.environment == 'development' }}
       uses: ./.github/actions/setup-local-supabase
       with:
-        public-url: http://172.20.10.3:54321
+        supabase-url: http://172.20.10.3:54321
 
     - name: Publish EAS update (+ QR comment on PRs)
       uses: expo/expo-github-action/preview@main
