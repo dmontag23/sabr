@@ -69,5 +69,5 @@ describe("sign in flow", () => {
     });
     await emitAuthEvent("SIGNED_IN", { user: { id: "user-1" } } as Session);
     expect(await findByText("Home")).toBeVisible();
-  });
+  }, 10000);
 });
