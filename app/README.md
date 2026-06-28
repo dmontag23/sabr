@@ -40,3 +40,31 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Running code from PRs on your phone
+
+Every PR opened against the `develop` branch gets a comment with a QR code. Scanning it on your phone loads the app with that code. The app communicates with a **local** Supabase instance running on your laptop.
+
+All PR builds are hardcoded to reach http://sabr-dev.local:54321, so you need to ensure your laptop can be reached at that URL.
+
+To do so:
+
+1. On a Mac, run
+
+```bash
+sudo scutil --set LocalHostName sabr-dev
+```
+
+Or got to System Settings → General → Sharing and scroll down to "Local hostname". Click "Edit..." to set the name to `sabr-dev`.
+
+2. Start a local supabase instance:
+
+```bash
+supabase start
+```
+
+3. Confirm the backend is reachable by inputting the following URL into a browser on your phone
+
+```bash
+http://sabr-dev.local:54321/auth/v1/health
+```

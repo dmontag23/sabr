@@ -1,5 +1,9 @@
 name: Setup local Supabase
 description: Start the local Supabase stack and export its variables to the GitHub environment.
+inputs:
+  supabase-url:
+    description: If set, this is the value of EXPO_PUBLIC_SUPABASE_URL. Otherwise, uses the URL from the `supabase status` command.
+
 runs:
   using: composite
   steps:
@@ -9,6 +13,6 @@ runs:
       run: |
         supabase start
         eval "$(supabase status -o env)"
-        echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+        echo "EXPO_PUBLIC_SUPABASE_URL=${{ inputs.supabase-url || '$API_URL' }}" >> "$GITHUB_ENV"
         echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
         echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
