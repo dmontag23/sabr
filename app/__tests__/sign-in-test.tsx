@@ -54,7 +54,7 @@ describe("sign in flow", () => {
     tested below. */
     await emitAuthEvent("SIGNED_IN", { user: { id: "user-1" } } as Session);
     expect(await findByText("Home")).toBeVisible();
-  });
+  }, 10000);
 
   test("user can sign in by following a magic link", async () => {
     const { findByText } = renderRouter("src/app", {
@@ -69,5 +69,5 @@ describe("sign in flow", () => {
     });
     await emitAuthEvent("SIGNED_IN", { user: { id: "user-1" } } as Session);
     expect(await findByText("Home")).toBeVisible();
-  }, 10000);
+  });
 });
