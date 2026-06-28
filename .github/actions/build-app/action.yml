@@ -5,11 +5,10 @@ inputs:
     description: The environment for which to build the app.
     required: true
   env-vars-json:
-    description: JSON containing all EXPO_PUBLIC_* values (please input using toJSON(vars)).
+    description: JSON containing all EXPO_PUBLIC_* values (please input this value using toJSON(vars)).
     required: true
   is-ios-simulator-build:
     description: Build an iOS simulator build instead of a device build.
-    required: false
     default: "false"
 outputs:
   eas-environment:
@@ -28,7 +27,11 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-eas
+    - uses: ./.github/actions/setup-app
+
+    - uses: expo/expo-github-action@main
+      with:
+        eas-version: latest
 
     - name: Resolve EAS build profile and platform
       id: resolve

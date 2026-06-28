@@ -10,7 +10,6 @@ on:
       - .github/actions/repack-app/action.yml
       - .github/actions/setup-app/action.yml
       - .github/actions/setup-e2e-tests/action.yml
-      - .github/actions/setup-eas/action.yml
       - .github/actions/setup-local-supabase/action.yml
       - .github/actions/upload-maestro-test-artifacts/action.yml
       - .github/workflows/mobile-app.yml
@@ -89,10 +88,10 @@ jobs:
   # iOS device builds cannot be installed on a simulator. Simulators (used for e2e tests) need their own build.
   build-ios-simulator:
     name: Build iOS simulator app 🏗
+    needs: resolve-environment
     # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
     # The following "if" statement should be "if: ${{ needs.resolve-environment.outputs.environment != 'production' }}" once Docker is supported on macos-26 runners.
     # See https://github.com/actions/runner-images/issues/13505
-    needs: resolve-environment
     if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
     runs-on: ubuntu-latest
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
@@ -127,9 +126,10 @@ jobs:
           environment: ${{ needs.resolve-environment.outputs.environment }}
 
       - uses: ./.github/actions/repack-app
-        id: repack
+
         # Only a reused build needs to repack the JS into it; a fresh build already has the current JS
         if: ${{ needs.resolve-environment.outputs.environment != 'development' && needs.build-apps.outputs.is-fresh-build == 'false' }}
+        id: repack
         with:
           platform: android
           build-id: ${{ needs.build-apps.outputs.android-build-id }}
@@ -161,10 +161,10 @@ jobs:
   e2e-tests-ios:
     name: E2E tests - IOS 📱
     runs-on: macos-26
+    needs: [resolve-environment, build-ios-simulator]
     # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
     # The following "if" statement should be 'if: ${{ needs.resolve-environment.outputs.environment != 'production' }}' once Docker is supported on macos-26 runners.
     # See https://github.com/actions/runner-images/issues/13505
-    needs: [resolve-environment, build-ios-simulator]
     if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     env:
@@ -178,9 +178,10 @@ jobs:
           environment: ${{ needs.resolve-environment.outputs.environment }}
 
       - uses: ./.github/actions/repack-app
-        id: repack
+
         # Only a reused build needs to repack the JS into it; a fresh build already has the current JS
         if: ${{ needs.resolve-environment.outputs.environment != 'development' && needs.build-ios-simulator.outputs.is-fresh-build == 'false' }}
+        id: repack
         with:
           platform: ios
           build-id: ${{ needs.build-ios-simulator.outputs.build-id }}
@@ -218,6 +219,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/deploy
         with:
           environment: ${{ needs.resolve-environment.outputs.environment }}
@@ -238,6 +240,7 @@ jobs:
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/deploy
         with:
           environment: ${{ needs.resolve-environment.outputs.environment }}
@@ -256,6 +259,7 @@ jobs:
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/deploy
         with:
           environment: ${{ needs.resolve-environment.outputs.environment }}

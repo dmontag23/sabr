@@ -9,15 +9,17 @@ inputs:
     required: true
   android-build-id:
     description: The Android build to submit on production.
-    required: false
   ios-build-id:
     description: The iOS build to submit on production.
-    required: false
 
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-eas
+    - uses: ./.github/actions/setup-app
+
+    - uses: expo/expo-github-action@main
+      with:
+        eas-version: latest
 
     - name: Inject development environment variables
       if: ${{ inputs.environment == 'development' }}

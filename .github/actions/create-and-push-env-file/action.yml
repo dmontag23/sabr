@@ -3,10 +3,9 @@ description: Write app/.env from EXPO_PUBLIC_* values and optionally push them t
 inputs:
   eas-environment:
     description: The EAS Cloud environment to which to push the variables.
-    required: false
     default: ""
   env-vars-json:
-    description: JSON containing all EXPO_PUBLIC_* values (use toJSON(vars)).
+    description: JSON containing all EXPO_PUBLIC_* values (use toJSON(vars) when inputting this value).
     required: true
 
 runs:

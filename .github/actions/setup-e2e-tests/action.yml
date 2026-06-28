@@ -8,7 +8,11 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-eas
+    - uses: ./.github/actions/setup-app
+
+    - uses: expo/expo-github-action@main
+      with:
+        eas-version: latest
 
     - name: Install Maestro
       shell: bash
