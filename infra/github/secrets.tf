@@ -27,6 +27,15 @@ resource "github_actions_environment_secret" "supabase_db_password" {
   value       = data.tfe_outputs.supabase[each.key].values["database_password"]
 }
 
+resource "github_actions_environment_variable" "app_variant" {
+  for_each = local.deployment_environments
+
+  repository    = github_repository.sabr.name
+  environment   = github_repository_environment.environment[each.key].environment
+  variable_name = "APP_VARIANT"
+  value         = each.key
+}
+
 resource "github_actions_environment_variable" "supabase_project_id" {
   for_each = local.deployment_environments
 
