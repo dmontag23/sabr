@@ -81,5 +81,5 @@ runs:
       shell: bash
       run: |
         BUILD_OUTPUT=$(eas build --non-interactive --profile=${{ steps.resolve.outputs.profile }} -p ${{ steps.resolve.outputs.platform }} --json)
-        echo "android-id=$(echo "$BUILD_OUTPUT" | jq -r '[.[] | select(.platform=="ANDROID")][0].id')" >> "$GITHUB_OUTPUT"
-        echo "ios-id=$(echo "$BUILD_OUTPUT" | jq -r '[.[] | select(.platform=="IOS")][0].id')" >> "$GITHUB_OUTPUT"
+        echo "android-id=$(echo "$BUILD_OUTPUT" | jq -r '[.[] | select(.platform=="ANDROID")][0].id // empty')" >> "$GITHUB_OUTPUT"
+        echo "ios-id=$(echo "$BUILD_OUTPUT" | jq -r '[.[] | select(.platform=="IOS")][0].id // empty')" >> "$GITHUB_OUTPUT"
