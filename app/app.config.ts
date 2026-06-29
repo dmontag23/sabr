@@ -4,8 +4,13 @@ import withRouter from "expo-router/plugin";
 import withSplashScreen from "expo-splash-screen/plugin";
 import withSecureStore from "expo-secure-store/plugin";
 
+const variant = process.env.APP_VARIANT || "development";
+const isProduction = variant === "production";
+const identifier = isProduction ? "app.sabr" : `app.sabr.${variant}`;
+const appName = isProduction ? "sabr" : `sabr (${variant})`;
+
 const config: ExpoConfig = {
-  name: "sabr",
+  name: appName,
   slug: "sabr",
   version: "1.0.0",
   orientation: "portrait",
@@ -14,10 +19,8 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "app.sabr",
-    infoPlist: {
-      ITSAppUsesNonExemptEncryption: false,
-    },
+    bundleIdentifier: identifier,
+    infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },
   android: {
     adaptiveIcon: {
@@ -27,12 +30,9 @@ const config: ExpoConfig = {
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     predictiveBackGestureEnabled: false,
-    package: "app.sabr",
+    package: identifier,
   },
-  web: {
-    output: "static",
-    favicon: "./assets/images/favicon.png",
-  },
+  web: { output: "static", favicon: "./assets/images/favicon.png" },
   plugins: [
     withDevClient({
       defaultLaunchURL: "http://localhost:8081",
@@ -51,21 +51,14 @@ const config: ExpoConfig = {
     withSecureStore(),
   ],
   buildCacheProvider: "eas",
-  experiments: {
-    typedRoutes: true,
-    reactCompiler: true,
-  },
+  experiments: { typedRoutes: true, reactCompiler: true },
   extra: {
     router: {},
-    eas: {
-      projectId: "749263d8-c462-4279-92aa-19fcda4a2a2f",
-    },
+    eas: { projectId: "749263d8-c462-4279-92aa-19fcda4a2a2f" },
   },
   owner: "dmontag23",
   runtimeVersion: { policy: "fingerprint" },
-  updates: {
-    url: "https://u.expo.dev/749263d8-c462-4279-92aa-19fcda4a2a2f",
-  },
+  updates: { url: "https://u.expo.dev/749263d8-c462-4279-92aa-19fcda4a2a2f" },
 };
 
 export default config;

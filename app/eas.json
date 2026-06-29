@@ -1,4 +1,5 @@
 {
+  "cli": { "appVersionSource": "remote" },
   "build": {
     "development": {
       "channel": "development",
@@ -8,13 +9,30 @@
     },
     "staging": {
       "channel": "staging",
-      "distribution": "internal",
-      "environment": "preview"
+      "environment": "preview",
+      "autoIncrement": true,
+      "android": { "distribution": "internal" }
     },
     "staging-ios-simulator": {
       "extends": "staging",
       "ios": { "simulator": true }
     },
-    "production": { "channel": "production", "environment": "production" }
+    "production": {
+      "channel": "production",
+      "environment": "production",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "staging": {
+      "ios": {
+        "ascAppId": "REPLACE_WITH_STAGING_ASC_APP_ID",
+        "groups": ["Staging Testers"]
+      }
+    },
+    "production": {
+      "ios": { "ascAppId": "REPLACE_WITH_PRODUCTION_ASC_APP_ID" },
+      "android": { "track": "production" }
+    }
   }
 }

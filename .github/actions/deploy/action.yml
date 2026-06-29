@@ -8,9 +8,9 @@ inputs:
     description: The EAS environment containing the environment variables on EAS Cloud.
     required: true
   android-build-id:
-    description: The Android build to submit on production.
+    description: The Android build to submit. If omitted, no build will be submitted.
   ios-build-id:
-    description: The iOS build to submit on production.
+    description: The iOS build to submit. If omitted, no build will be submitted.
 
 runs:
   using: composite
@@ -29,19 +29,20 @@ runs:
 
     - name: Publish EAS update (+ QR comment on PRs)
       uses: expo/expo-github-action/preview@main
+      if: ${{ inputs.android-build-id == '' && inputs.ios-build-id == '' }}
       with:
         working-directory: app
         comment: ${{ inputs.environment == 'development' }}
         command: eas update --auto --branch ${{ inputs.environment == 'development' && github.head_ref || inputs.environment }} --environment ${{ inputs.eas-environment }}
 
     - name: Submit Android build to the store
-      if: ${{ inputs.environment == 'production' && inputs.android-build-id != '' }}
+      if: ${{ inputs.android-build-id != '' }}
       working-directory: app
       shell: bash
-      run: eas submit -p android --id ${{ inputs.android-build-id }} --non-interactive
+      run: eas submit -p android --profile ${{ inputs.environment }} --id ${{ inputs.android-build-id }} --non-interactive
 
     - name: Submit iOS build to the store
-      if: ${{ inputs.environment == 'production' && inputs.ios-build-id != '' }}
+      if: ${{ inputs.ios-build-id != '' }}
       working-directory: app
       shell: bash
-      run: eas submit -p ios --id ${{ inputs.ios-build-id }} --non-interactive
+      run: eas submit -p ios --profile ${{ inputs.environment }} --id ${{ inputs.ios-build-id }} --non-interactive

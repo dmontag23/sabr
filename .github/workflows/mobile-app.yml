@@ -116,6 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     env:
+      APP_VARIANT: ${{ vars.APP_VARIANT }}
       MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.environment == 'development' && 'mailpit' || 'resend' }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
@@ -124,6 +125,9 @@ jobs:
       - uses: ./.github/actions/setup-e2e-tests
         with:
           environment: ${{ needs.resolve-environment.outputs.environment }}
+
+      - name: Resolve app id from app config
+        run: echo "MAESTRO_APP_ID=$(npx expo config --json | jq -r '.android.package')" >> "$GITHUB_ENV"
 
       - uses: ./.github/actions/repack-app
 
@@ -168,6 +172,7 @@ jobs:
     if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     env:
+      APP_VARIANT: ${{ vars.APP_VARIANT }}
       MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.environment == 'development' && 'mailpit' || 'resend' }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
@@ -176,6 +181,9 @@ jobs:
       - uses: ./.github/actions/setup-e2e-tests
         with:
           environment: ${{ needs.resolve-environment.outputs.environment }}
+
+      - name: Resolve app id from app config
+        run: echo "MAESTRO_APP_ID=$(npx expo config --json | jq -r '.ios.bundleIdentifier')" >> "$GITHUB_ENV"
 
       - uses: ./.github/actions/repack-app
 
@@ -205,7 +213,7 @@ jobs:
           name: ios
 
   # ---------------- Deploy ----------------
-  deploy-preview:
+  deploy-development:
     name: Deploy to development 🚀
     runs-on: ubuntu-latest
     needs:
@@ -245,6 +253,7 @@ jobs:
         with:
           environment: ${{ needs.resolve-environment.outputs.environment }}
           eas-environment: ${{ needs.build-apps.outputs.eas-environment }}
+          ios-build-id: ${{ needs.build-apps.outputs.is-fresh-build == 'true' && needs.build-apps.outputs.ios-build-id || '' }}
 
   deploy-production:
     name: Deploy to production 🚀
