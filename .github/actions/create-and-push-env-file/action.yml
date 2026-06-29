@@ -1,0 +1,30 @@
+name: Create and push environment variables to EAS Cloud
+description: Write app/.env from EXPO_PUBLIC_* values and optionally push them to an EAS environment
+inputs:
+  eas-environment:
+    description: The EAS Cloud environment to which to push the variables.
+    default: ""
+  env-vars-json:
+    description: JSON containing all EXPO_PUBLIC_* values (use toJSON(vars) when inputting this value).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Create .env file
+      working-directory: app
+      shell: bash
+      env:
+        ENV_VARS_JSON: ${{ inputs.env-vars-json }}
+      run: |
+        # Put every EXPO_PUBLIC_* env variable in the .env file
+        echo "$ENV_VARS_JSON" | jq -r '
+          to_entries[]
+          | select(.key | startswith("EXPO_PUBLIC_"))
+          | "\(.key)=\(.value)"' > .env
+
+    - name: Push environment variables to EAS Cloud
+      if: ${{ inputs.eas-environment != '' }}
+      working-directory: app
+      shell: bash
+      run: eas env:push ${{ inputs.eas-environment }} --path .env --force
