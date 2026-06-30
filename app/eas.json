@@ -26,12 +26,12 @@
   "submit": {
     "staging": {
       "ios": {
-        "ascAppId": "REPLACE_WITH_STAGING_ASC_APP_ID",
+        "ascAppId": "6785704268",
         "groups": ["Staging Testers"]
       }
     },
     "production": {
-      "ios": { "ascAppId": "REPLACE_WITH_PRODUCTION_ASC_APP_ID" },
+      "ios": { "ascAppId": "6785685396" },
       "android": { "track": "production" }
     }
   }
