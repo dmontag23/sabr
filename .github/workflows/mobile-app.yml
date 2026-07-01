@@ -65,6 +65,7 @@ jobs:
           echo "environment=${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'staging' || 'development' }}" >> "$GITHUB_OUTPUT"
           echo "github-environment=${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'staging' || '' }}" >> "$GITHUB_OUTPUT"
 
+  # TODO: Decouple IOS and Android builds so a rebuild of one does not force a rebuild of the other
   # ---------------- Build ----------------
   build-apps:
     name: Build apps 🏗
@@ -246,6 +247,8 @@ jobs:
       ]
     if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
+    env:
+      APP_VARIANT: ${{ vars.APP_VARIANT }}
     steps:
       - uses: actions/checkout@v6
 
@@ -266,6 +269,8 @@ jobs:
       ]
     if: ${{ needs.resolve-environment.outputs.environment == 'production' }}
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
+    env:
+      APP_VARIANT: ${{ vars.APP_VARIANT }}
     steps:
       - uses: actions/checkout@v6
 
