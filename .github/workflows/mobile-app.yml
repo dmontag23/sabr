@@ -38,7 +38,7 @@ jobs:
     name: Static checks and unit/integration tests 🧪
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-app
 
@@ -78,7 +78,7 @@ jobs:
       ios-build-id: ${{ steps.build.outputs.ios-build-id }}
       is-fresh-build: ${{ steps.build.outputs.is-fresh-build }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/build-app
         id: build
@@ -100,7 +100,7 @@ jobs:
       build-id: ${{ steps.build.outputs.ios-build-id }}
       is-fresh-build: ${{ steps.build.outputs.is-fresh-build }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/build-app
         id: build
@@ -121,7 +121,7 @@ jobs:
       MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.environment == 'development' && 'mailpit' || 'resend' }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-e2e-tests
         with:
@@ -177,7 +177,7 @@ jobs:
       MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.environment == 'development' && 'mailpit' || 'resend' }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-e2e-tests
         with:
@@ -227,7 +227,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/deploy
         with:
@@ -250,7 +250,7 @@ jobs:
     env:
       APP_VARIANT: ${{ vars.APP_VARIANT }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/deploy
         with:
@@ -272,7 +272,7 @@ jobs:
     env:
       APP_VARIANT: ${{ vars.APP_VARIANT }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/deploy
         with:
