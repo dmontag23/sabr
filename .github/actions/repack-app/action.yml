@@ -1,0 +1,33 @@
+name: Repack app
+description: Repack the current JS into an existing EAS build.
+inputs:
+  platform:
+    description: Platform of the build ("ios" or "android").
+    required: true
+  build-id:
+    description: The EAS build to repack.
+    required: true
+  env-vars-json:
+    description: JSON containing all EXPO_PUBLIC_* values (use toJSON(vars)), put into the repacked bundle.
+    required: true
+outputs:
+  path:
+    description: Path to the repacked app.
+    value: ${{ steps.repack.outputs.path }}
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/create-and-push-env-file
+      with:
+        env-vars-json: ${{ inputs.env-vars-json }}
+
+    - name: Repack current JS into the build
+      id: repack
+      working-directory: app
+      shell: bash
+      run: |
+        APP_PATH=$(eas build:download --non-interactive --build-id "${{ inputs.build-id }}" --json | jq -r '.path')
+        OUTPUT_PATH="$PWD/repacked.${{ inputs.platform == 'ios' && 'app' || 'apk' }}"
+        npx @expo/repack-app -p ${{ inputs.platform }} --source-app "$APP_PATH" --output "$OUTPUT_PATH"
+        echo "path=$OUTPUT_PATH" >> "$GITHUB_OUTPUT"

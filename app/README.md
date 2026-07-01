@@ -40,3 +40,52 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Running code from PRs on your phone
+
+Every PR opened against the `develop` branch gets a comment with a QR code. Scanning it on your phone loads the app with that code. The app communicates with a **local** Supabase instance running on your laptop.
+
+All PR builds are hardcoded to reach http://sabr-dev.local:54321, so you need to ensure your laptop can be reached at that URL.
+
+To do so:
+
+1. On a Mac, run
+
+```bash
+sudo scutil --set LocalHostName sabr-dev
+```
+
+Or got to System Settings → General → Sharing and scroll down to "Local hostname". Click "Edit..." to set the name to `sabr-dev`.
+
+2. Start a local supabase instance:
+
+```bash
+supabase start
+```
+
+3. Confirm the backend is reachable by inputting the following URL into a browser on your phone
+
+```bash
+http://sabr-dev.local:54321/auth/v1/health
+```
+
+## Distributing builds to testers
+
+3 different versions of the app - called "variants" - can exist on the same physical device. The variant describes the environment, and each variant is given its own identifier, set in [app.config.ts](app.config.ts):
+
+| Variant (`APP_VARIANT`) | Identifier             | How testers download this app version                                                                                         |
+| ----------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| development             | `app.sabr.development` | PR QR codes (downloaded via the internal dev client).                                                                         |
+| staging                 | `app.sabr.staging`     | iOS: TestFlight. Android: EAS [internal distribution link](https://docs.expo.dev/tutorial/eas/internal-distribution-builds/). |
+| production              | `app.sabr`             | iOS: App Store. Android: Google Play.                                                                                         |
+
+`APP_VARIANT` is a Terraform-managed GitHub environment variable in ([infra/github/secrets.tf](/infra/github/secrets.tf)) pushed to EAS by the [create-and-push-env-file](/.github/actions/create-and-push-env-file/action.yml) action. When not set, [app.config.ts](app.config.ts) defaults `APP_VARIANT` to `development`.
+
+Most of the time, merging to the `develop` branch publishes an EAS Update to the `staging` channel, which is auto-delivered to installed staging apps on both platforms. When the native fingerprint changes, CI builds a new version of the app; the iOS app is submitted to TestFlight automatically, and the new Android APK is available via its EAS build link (TODO: Make this available to testers on the `internal` track of the Play Store - note this requires an additional Android build).
+
+### iOS staging app (TestFlight) — one-time setup
+
+1. Enroll in the [Apple Developer Program](https://developer.apple.com/programs/).
+2. Create two [App Store Connect](https://appstoreconnect.apple.com/) apps: `app.sabr` and `app.sabr.staging`. Put each Apple ID into the matching `ascAppId` in [eas.json](eas.json).
+3. Create and store the App Store Connect API key on EAS by running `eas credentials --platform ios` in the `app` directory.
+4. On App Store Connect, in the `app.sabr.staging` app, go to the TestFlight tab → INTERNAL TESTING, create a group named `Staging Testers` and add testers.

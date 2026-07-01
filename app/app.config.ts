@@ -1,0 +1,64 @@
+import { ExpoConfig } from "expo/config";
+import withDevClient from "expo-dev-client/plugin";
+import withRouter from "expo-router/plugin";
+import withSplashScreen from "expo-splash-screen/plugin";
+import withSecureStore from "expo-secure-store/plugin";
+
+const variant = process.env.APP_VARIANT || "development";
+const isProduction = variant === "production";
+const identifier = isProduction ? "app.sabr" : `app.sabr.${variant}`;
+const appName = isProduction ? "sabr" : `sabr (${variant})`;
+
+const config: ExpoConfig = {
+  name: appName,
+  slug: "sabr",
+  version: "1.0.0",
+  orientation: "portrait",
+  icon: "./assets/images/icon.png",
+  scheme: "app.sabr",
+  userInterfaceStyle: "automatic",
+  ios: {
+    supportsTablet: true,
+    bundleIdentifier: identifier,
+    infoPlist: { ITSAppUsesNonExemptEncryption: false },
+  },
+  android: {
+    adaptiveIcon: {
+      backgroundColor: "#E6F4FE",
+      foregroundImage: "./assets/images/android-icon-foreground.png",
+      backgroundImage: "./assets/images/android-icon-background.png",
+      monochromeImage: "./assets/images/android-icon-monochrome.png",
+    },
+    predictiveBackGestureEnabled: false,
+    package: identifier,
+  },
+  web: { output: "static", favicon: "./assets/images/favicon.png" },
+  plugins: [
+    withDevClient({
+      defaultLaunchURL: "http://localhost:8081",
+      android: { defaultLaunchURL: "http://10.0.2.2:8081" },
+      skipOnboarding: true,
+      showMenuAtLaunch: false,
+    }),
+    withRouter(),
+    withSplashScreen({
+      image: "./assets/images/splash-icon.png",
+      imageWidth: 200,
+      resizeMode: "contain",
+      backgroundColor: "#ffffff",
+      dark: { backgroundColor: "#000000" },
+    }),
+    withSecureStore(),
+  ],
+  buildCacheProvider: "eas",
+  experiments: { typedRoutes: true, reactCompiler: true },
+  extra: {
+    router: {},
+    eas: { projectId: "749263d8-c462-4279-92aa-19fcda4a2a2f" },
+  },
+  owner: "dmontag23",
+  runtimeVersion: { policy: "fingerprint" },
+  updates: { url: "https://u.expo.dev/749263d8-c462-4279-92aa-19fcda4a2a2f" },
+};
+
+export default config;

@@ -1,0 +1,85 @@
+name: Build app on EAS Cloud
+description: Build the app on EAS Cloud, or reuse an existing build if the native fingerprint is unchanged.
+inputs:
+  environment:
+    description: The environment for which to build the app.
+    required: true
+  env-vars-json:
+    description: JSON containing all EXPO_PUBLIC_* values (please input this value using toJSON(vars)).
+    required: true
+  is-ios-simulator-build:
+    description: Build an iOS simulator build instead of a device build.
+    default: "false"
+outputs:
+  eas-environment:
+    description: The EAS environment containing the environment variables on EAS Cloud for the build.
+    value: ${{ steps.eas-environment.outputs.value }}
+  android-build-id:
+    description: Android build matching the current fingerprint.
+    value: ${{ steps.build.outputs.android-id || steps.fingerprint.outputs.android-build-id }}
+  ios-build-id:
+    description: iOS build matching the current fingerprint.
+    value: ${{ steps.build.outputs.ios-id || steps.fingerprint.outputs.ios-build-id }}
+  is-fresh-build:
+    description: '"true" if a new EAS Cloud build is launched because the native fingerprint changed, "false" if an existing EAS Cloud build is reused.'
+    value: ${{ steps.build.outputs.ios-id != '' || steps.build.outputs.android-id != '' }}
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup-app
+
+    - uses: expo/expo-github-action@main
+      with:
+        eas-version: latest
+
+    - name: Resolve EAS build profile and platform
+      id: resolve
+      shell: bash
+      run: |
+        PROFILE="${{ inputs.environment }}"
+        PLATFORM="all"
+        if [ "${{ inputs.is-ios-simulator-build }}" = "true" ]; then
+          PROFILE="${{ inputs.environment }}-ios-simulator"
+          PLATFORM="ios"
+        fi
+        echo "profile=$PROFILE" >> "$GITHUB_OUTPUT"
+        echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"
+
+    - name: Resolve EAS environment
+      id: eas-environment
+      working-directory: app
+      shell: bash
+      run: |
+        # Resolves the EAS environment from eas.json
+        # Assumes that an "environment" key is present in the eas.json file
+        # and that the environment is only at most one 'extends' level away from its profile.
+        ENVIRONMENT=$(jq -r --arg profile "${{ steps.resolve.outputs.profile }}" '.build[$profile].environment // .build[.build[$profile].extends].environment' eas.json)
+        echo "value=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+
+    - name: Create and push environment variables to EAS Cloud
+      if: ${{ inputs.environment != 'development' }}
+      uses: ./.github/actions/create-and-push-env-file
+      with:
+        eas-environment: ${{ steps.eas-environment.outputs.value }}
+        env-vars-json: ${{ inputs.env-vars-json }}
+
+    - name: Get app fingerprint
+      id: fingerprint
+      uses: expo/expo-github-action/continuous-deploy-fingerprint-info@main
+      with:
+        platform: ${{ steps.resolve.outputs.platform }}
+        profile: ${{ steps.resolve.outputs.profile }}
+        working-directory: app
+
+    - name: Build missing app(s) on EAS Cloud
+      if: >-
+        ${{ steps.fingerprint.outputs.ios-build-id == ''
+        || (inputs.is-ios-simulator-build == 'false' && steps.fingerprint.outputs.android-build-id == '') }}
+      id: build
+      working-directory: app
+      shell: bash
+      run: |
+        BUILD_OUTPUT=$(eas build --non-interactive --profile=${{ steps.resolve.outputs.profile }} -p ${{ steps.resolve.outputs.platform }} --json)
+        echo "android-id=$(echo "$BUILD_OUTPUT" | jq -r '[.[] | select(.platform=="ANDROID")][0].id // empty')" >> "$GITHUB_OUTPUT"
+        echo "ios-id=$(echo "$BUILD_OUTPUT" | jq -r '[.[] | select(.platform=="IOS")][0].id // empty')" >> "$GITHUB_OUTPUT"
