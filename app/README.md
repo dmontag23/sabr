@@ -83,9 +83,18 @@ http://sabr-dev.local:54321/auth/v1/health
 
 Most of the time, merging to the `develop` branch publishes an EAS Update to the `staging` channel, which is auto-delivered to installed staging apps on both platforms. When the native fingerprint changes, CI builds a new version of the app; the iOS app is submitted to TestFlight automatically, and the new Android APK is available via its EAS build link (TODO: Make this available to testers on the `internal` track of the Play Store - note this requires an additional Android build).
 
-### iOS staging app (TestFlight) — one-time setup
+### Setting up TestFlight (iOS app)
 
 1. Enroll in the [Apple Developer Program](https://developer.apple.com/programs/).
-2. Create two [App Store Connect](https://appstoreconnect.apple.com/) apps: `app.sabr` and `app.sabr.staging`. Put each Apple ID into the matching `ascAppId` in [eas.json](eas.json).
-3. Create and store the App Store Connect API key on EAS by running `eas credentials --platform ios` in the `app` directory.
+2. Let EAS create the App Store Connect apps instead of making them by hand. Ensure the `ascAppId` fields are NOT in [eas.json](eas.json), then from `app` directory build and submit the staging and production variants once via the command line. To do so, run:
+
+   ```bash
+   eas build --platform ios --profile <staging|production>
+
+   eas submit --platform ios --profile <staging|production>
+   ```
+
+   When prompted, choose the following options: `<variant> → Log in to your Apple account → Enter Apple ID → App Store Connect: Manage your API Key`. After going through the API key prompt, choose `Build Credentials: Manage everything needed to build your project → All: Set up all the required credentials to build your project`. Then `Go back → Exit`. If no app exists for the bundle identifier, EAS will register it and create an app in [App Store Connect](https://appstoreconnect.apple.com/apps). Note the app name must be globally unique across the App Store.
+
+3. Copy the generated Apple ID into the `submit.<VARIANT>.ios.ascAppId` field in [eas.json](eas.json). This allows CI to submit the build.
 4. On App Store Connect, in the `app.sabr.staging` app, go to the TestFlight tab → INTERNAL TESTING, create a group named `Staging Testers` and add testers.
