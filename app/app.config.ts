@@ -4,10 +4,10 @@ import withRouter from "expo-router/plugin";
 import withSplashScreen from "expo-splash-screen/plugin";
 import withSecureStore from "expo-secure-store/plugin";
 
-const variant = process.env.APP_VARIANT || "development";
-const isProduction = variant === "production";
-const identifier = isProduction ? "app.sabr" : `app.sabr.${variant}`;
-const appName = isProduction ? "sabr" : `sabr (${variant})`;
+const environment = process.env.DEPLOYMENT_ENVIRONMENT || "development";
+const isProduction = environment === "production";
+const identifier = isProduction ? "app.sabr" : `app.sabr.${environment}`;
+const appName = isProduction ? "sabr" : `sabr (${environment})`;
 
 const config: ExpoConfig = {
   name: appName,

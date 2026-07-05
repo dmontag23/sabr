@@ -14,7 +14,7 @@ After enabling corepack, run `pnpm i` from this directory to install the necessa
 
 ## Get started
 
-Start the app buy running
+Start the app by running
 
 ```bash
 npx expo start
@@ -55,7 +55,7 @@ To do so:
 sudo scutil --set LocalHostName sabr-dev
 ```
 
-Or got to System Settings → General → Sharing and scroll down to "Local hostname". Click "Edit..." to set the name to `sabr-dev`.
+Or go to System Settings → General → Sharing and scroll down to "Local hostname". Click "Edit..." to set the name to `sabr-dev`.
 
 2. Start a local supabase instance:
 
@@ -71,30 +71,32 @@ http://sabr-dev.local:54321/auth/v1/health
 
 ## Distributing builds to testers
 
-3 different versions of the app - called "variants" - can exist on the same physical device. The variant describes the environment, and each variant is given its own identifier, set in [app.config.ts](app.config.ts):
+3 different versions of the app - one per deployment environment - can exist on the same physical device. Each version is given its own identifier, set in [app.config.ts](app.config.ts):
 
-| Variant (`APP_VARIANT`) | Identifier             | How testers download this app version                                                                                         |
-| ----------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| development             | `app.sabr.development` | PR QR codes (downloaded via the internal dev client).                                                                         |
-| staging                 | `app.sabr.staging`     | iOS: TestFlight. Android: EAS [internal distribution link](https://docs.expo.dev/tutorial/eas/internal-distribution-builds/). |
-| production              | `app.sabr`             | iOS: App Store. Android: Google Play.                                                                                         |
+| Environment (`DEPLOYMENT_ENVIRONMENT`) | Identifier             | How testers download this app version                                                                                         |
+| -------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| development                            | `app.sabr.development` | PR QR codes (downloaded via the internal dev client).                                                                         |
+| staging                                | `app.sabr.staging`     | iOS: TestFlight. Android: EAS [internal distribution link](https://docs.expo.dev/tutorial/eas/internal-distribution-builds/). |
+| production                             | `app.sabr`             | iOS: App Store. Android: Google Play.                                                                                         |
 
-`APP_VARIANT` is a Terraform-managed GitHub environment variable in ([infra/github/secrets.tf](/infra/github/secrets.tf)) pushed to EAS by the [create-and-push-env-file](/.github/actions/create-and-push-env-file/action.yml) action. When not set, [app.config.ts](app.config.ts) defaults `APP_VARIANT` to `development`.
+`DEPLOYMENT_ENVIRONMENT` is resolved from the branch in [mobile-app.yml](/.github/workflows/mobile-app.yml) (`main` → `production`, `develop` → `staging`, anything else → `development`) and made available to every CI job as a workflow-level environment variable. Builds on EAS Cloud do not inherit the CI runner's environment, so the [create-and-push-env-file](/.github/actions/create-and-push-env-file/action.yml) action pushes it to the matching EAS environment. When not set (e.g. when running locally), [app.config.ts](app.config.ts) defaults it to `development`.
 
 Most of the time, merging to the `develop` branch publishes an EAS Update to the `staging` channel, which is auto-delivered to installed staging apps on both platforms. When the native fingerprint changes, CI builds a new version of the app; the iOS app is submitted to TestFlight automatically, and the new Android APK is available via its EAS build link (TODO: Make this available to testers on the `internal` track of the Play Store - note this requires an additional Android build).
 
 ### Setting up TestFlight (iOS app)
 
 1. Enroll in the [Apple Developer Program](https://developer.apple.com/programs/).
-2. Let EAS create the App Store Connect apps instead of making them by hand. Ensure the `ascAppId` fields are NOT in [eas.json](eas.json), then from `app` directory build and submit the staging and production variants once via the command line. To do so, run:
+2. Let EAS create the App Store Connect apps instead of making them by hand. Ensure the `ascAppId` fields are NOT in [eas.json](eas.json), then from the `app` directory build and submit the staging and production versions once via the command line. Nothing sets `DEPLOYMENT_ENVIRONMENT` outside of CI, so it must be provided explicitly for the correct bundle identifier to be resolved:
 
    ```bash
-   eas build --platform ios --profile <staging|production>
+   DEPLOYMENT_ENVIRONMENT=<staging|production> eas build --platform ios --profile <staging|production>
 
-   eas submit --platform ios --profile <staging|production>
+   DEPLOYMENT_ENVIRONMENT=<staging|production> eas submit --platform ios --profile <staging|production>
    ```
 
-   When prompted, choose the following options: `<variant> → Log in to your Apple account → Enter Apple ID → App Store Connect: Manage your API Key`. After going through the API key prompt, choose `Build Credentials: Manage everything needed to build your project → All: Set up all the required credentials to build your project`. Then `Go back → Exit`. If no app exists for the bundle identifier, EAS will register it and create an app in [App Store Connect](https://appstoreconnect.apple.com/apps). Note the app name must be globally unique across the App Store.
+   Note the build itself runs on EAS Cloud, which reads `DEPLOYMENT_ENVIRONMENT` from the EAS environment rather than your local machine. CI pushes it there on every build; if CI has never run, set it once manually with `eas env:create <preview|production> --name DEPLOYMENT_ENVIRONMENT --value <staging|production>`.
 
-3. Copy the generated Apple ID into the `submit.<VARIANT>.ios.ascAppId` field in [eas.json](eas.json). This allows CI to submit the build.
+   When prompted, choose the following options: `<ENVIRONMENT> → Log in to your Apple account → Enter Apple ID → App Store Connect: Manage your API Key`. After going through the API key prompt, choose `Build Credentials: Manage everything needed to build your project → All: Set up all the required credentials to build your project`. Then `Go back → Exit`. If no app exists for the bundle identifier, EAS will register it and create an app in [App Store Connect](https://appstoreconnect.apple.com/apps). Note the app name must be globally unique across the App Store.
+
+3. Copy the generated Apple ID into the `submit.<ENVIRONMENT>.ios.ascAppId` field in [eas.json](eas.json). This allows CI to submit the build.
 4. On App Store Connect, in the `app.sabr.staging` app, go to the TestFlight tab → INTERNAL TESTING, create a group named `Staging Testers` and add testers.

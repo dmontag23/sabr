@@ -27,6 +27,7 @@ defaults:
     working-directory: app
 
 env:
+  DEPLOYMENT_ENVIRONMENT: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'staging' || 'development' }}
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
   HUSKY: "0"
   MAESTRO_CLI_NO_ANALYTICS: true
@@ -56,14 +57,14 @@ jobs:
     name: Resolve environment and associated variables 🧭
     runs-on: ubuntu-latest
     outputs:
-      environment: ${{ steps.resolve.outputs.environment }}
+      deployment-environment: ${{ steps.resolve.outputs.deployment-environment }}
       github-environment: ${{ steps.resolve.outputs.github-environment }}
     steps:
       - id: resolve
         working-directory: ${{ github.workspace }}
         run: |
-          echo "environment=${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'staging' || 'development' }}" >> "$GITHUB_OUTPUT"
-          echo "github-environment=${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'staging' || '' }}" >> "$GITHUB_OUTPUT"
+          echo "deployment-environment=$DEPLOYMENT_ENVIRONMENT" >> "$GITHUB_OUTPUT"
+          echo "github-environment=$([ "$DEPLOYMENT_ENVIRONMENT" = development ] || echo "$DEPLOYMENT_ENVIRONMENT")" >> "$GITHUB_OUTPUT"
 
   # TODO: Decouple IOS and Android builds so a rebuild of one does not force a rebuild of the other
   # ---------------- Build ----------------
@@ -83,7 +84,7 @@ jobs:
       - uses: ./.github/actions/build-app
         id: build
         with:
-          environment: ${{ needs.resolve-environment.outputs.environment }}
+          environment: ${{ needs.resolve-environment.outputs.deployment-environment }}
           env-vars-json: ${{ toJSON(vars) }}
 
   # iOS device builds cannot be installed on a simulator. Simulators (used for e2e tests) need their own build.
@@ -91,9 +92,9 @@ jobs:
     name: Build iOS simulator app 🏗
     needs: resolve-environment
     # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
-    # The following "if" statement should be "if: ${{ needs.resolve-environment.outputs.environment != 'production' }}" once Docker is supported on macos-26 runners.
+    # The following "if" statement should be "if: ${{ needs.resolve-environment.outputs.deployment-environment != 'production' }}" once Docker is supported on macos-26 runners.
     # See https://github.com/actions/runner-images/issues/13505
-    if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
+    if: ${{ needs.resolve-environment.outputs.deployment-environment == 'staging' }}
     runs-on: ubuntu-latest
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     outputs:
@@ -106,26 +107,25 @@ jobs:
         id: build
         with:
           is-ios-simulator-build: "true"
-          environment: ${{ needs.resolve-environment.outputs.environment }}
+          environment: ${{ needs.resolve-environment.outputs.deployment-environment }}
           env-vars-json: ${{ toJSON(vars) }}
 
   # ---------------- Test ----------------
   e2e-tests-android:
     name: E2E tests - Android 🤖
     needs: [resolve-environment, build-apps]
-    if: ${{ needs.resolve-environment.outputs.environment != 'production' }}
+    if: ${{ needs.resolve-environment.outputs.deployment-environment != 'production' }}
     runs-on: ubuntu-latest
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     env:
-      APP_VARIANT: ${{ vars.APP_VARIANT }}
-      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.environment == 'development' && 'mailpit' || 'resend' }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.deployment-environment == 'development' && 'mailpit' || 'resend' }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-e2e-tests
         with:
-          environment: ${{ needs.resolve-environment.outputs.environment }}
+          environment: ${{ needs.resolve-environment.outputs.deployment-environment }}
 
       - name: Resolve app id from app config
         run: echo "MAESTRO_APP_ID=$(npx expo config --json | jq -r '.android.package')" >> "$GITHUB_ENV"
@@ -133,7 +133,7 @@ jobs:
       - uses: ./.github/actions/repack-app
 
         # Only a reused build needs to repack the JS into it; a fresh build already has the current JS
-        if: ${{ needs.resolve-environment.outputs.environment != 'development' && needs.build-apps.outputs.is-fresh-build == 'false' }}
+        if: ${{ needs.resolve-environment.outputs.deployment-environment != 'development' && needs.build-apps.outputs.is-fresh-build == 'false' }}
         id: repack
         with:
           platform: android
@@ -154,7 +154,7 @@ jobs:
           arch: x86_64
           working-directory: app
           script: |
-            if [ "${{ needs.resolve-environment.outputs.environment }}" = "development" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
+            if [ "${{ needs.resolve-environment.outputs.deployment-environment }}" = "development" ]; then adb reverse tcp:54321 tcp:54321; adb reverse tcp:8081 tcp:8081; fi
             eas build:run -p android ${{ steps.repack.outputs.path && format('--path {0}', steps.repack.outputs.path) || format('--id {0}', needs.build-apps.outputs.android-build-id) }}
             pnpm test:e2e
 
@@ -168,20 +168,19 @@ jobs:
     runs-on: macos-26
     needs: [resolve-environment, build-ios-simulator]
     # TODO: Docker is not supported on macos-26 runners, and there is no easy way to run it on a macos-26+ runner in a fast and reliable way.
-    # The following "if" statement should be 'if: ${{ needs.resolve-environment.outputs.environment != 'production' }}' once Docker is supported on macos-26 runners.
+    # The following "if" statement should be 'if: ${{ needs.resolve-environment.outputs.deployment-environment != 'production' }}' once Docker is supported on macos-26 runners.
     # See https://github.com/actions/runner-images/issues/13505
-    if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
+    if: ${{ needs.resolve-environment.outputs.deployment-environment == 'staging' }}
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
     env:
-      APP_VARIANT: ${{ vars.APP_VARIANT }}
-      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.environment == 'development' && 'mailpit' || 'resend' }}
+      MAESTRO_MAIL_PROVIDER: ${{ needs.resolve-environment.outputs.deployment-environment == 'development' && 'mailpit' || 'resend' }}
       MAESTRO_RESEND_API_KEY: ${{ secrets.MAESTRO_RESEND_API_KEY }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-e2e-tests
         with:
-          environment: ${{ needs.resolve-environment.outputs.environment }}
+          environment: ${{ needs.resolve-environment.outputs.deployment-environment }}
 
       - name: Resolve app id from app config
         run: echo "MAESTRO_APP_ID=$(npx expo config --json | jq -r '.ios.bundleIdentifier')" >> "$GITHUB_ENV"
@@ -189,7 +188,7 @@ jobs:
       - uses: ./.github/actions/repack-app
 
         # Only a reused build needs to repack the JS into it; a fresh build already has the current JS
-        if: ${{ needs.resolve-environment.outputs.environment != 'development' && needs.build-ios-simulator.outputs.is-fresh-build == 'false' }}
+        if: ${{ needs.resolve-environment.outputs.deployment-environment != 'development' && needs.build-ios-simulator.outputs.is-fresh-build == 'false' }}
         id: repack
         with:
           platform: ios
@@ -223,7 +222,7 @@ jobs:
         resolve-environment,
         build-apps,
       ]
-    if: ${{ needs.resolve-environment.outputs.environment == 'development' }}
+    if: ${{ needs.resolve-environment.outputs.deployment-environment == 'development' }}
     permissions:
       pull-requests: write
     steps:
@@ -231,7 +230,7 @@ jobs:
 
       - uses: ./.github/actions/deploy
         with:
-          environment: ${{ needs.resolve-environment.outputs.environment }}
+          environment: ${{ needs.resolve-environment.outputs.deployment-environment }}
           eas-environment: ${{ needs.build-apps.outputs.eas-environment }}
 
   deploy-staging:
@@ -245,16 +244,14 @@ jobs:
         e2e-tests-android,
         e2e-tests-ios,
       ]
-    if: ${{ needs.resolve-environment.outputs.environment == 'staging' }}
+    if: ${{ needs.resolve-environment.outputs.deployment-environment == 'staging' }}
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
-    env:
-      APP_VARIANT: ${{ vars.APP_VARIANT }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/deploy
         with:
-          environment: ${{ needs.resolve-environment.outputs.environment }}
+          environment: ${{ needs.resolve-environment.outputs.deployment-environment }}
           eas-environment: ${{ needs.build-apps.outputs.eas-environment }}
           ios-build-id: ${{ needs.build-apps.outputs.is-fresh-build == 'true' && needs.build-apps.outputs.ios-build-id || '' }}
 
@@ -267,16 +264,14 @@ jobs:
         resolve-environment,
         build-apps,
       ]
-    if: ${{ needs.resolve-environment.outputs.environment == 'production' }}
+    if: ${{ needs.resolve-environment.outputs.deployment-environment == 'production' }}
     environment: ${{ needs.resolve-environment.outputs.github-environment }}
-    env:
-      APP_VARIANT: ${{ vars.APP_VARIANT }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/deploy
         with:
-          environment: ${{ needs.resolve-environment.outputs.environment }}
+          environment: ${{ needs.resolve-environment.outputs.deployment-environment }}
           eas-environment: ${{ needs.build-apps.outputs.eas-environment }}
           android-build-id: ${{ needs.build-apps.outputs.is-fresh-build == 'true' && needs.build-apps.outputs.android-build-id || '' }}
           ios-build-id: ${{ needs.build-apps.outputs.is-fresh-build == 'true' && needs.build-apps.outputs.ios-build-id || '' }}
