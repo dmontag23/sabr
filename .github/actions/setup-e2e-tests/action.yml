@@ -1,8 +1,8 @@
 name: Setup e2e tests
-description: Prerequisites for running e2e tests on a mobile emulator
+description: Install the EAS toolchain + Maestro, and for the development environment start a local Supabase instance + Metro
 inputs:
-  platform:
-    description: Platform to run tests on ("ios" or "android")
+  environment:
+    description: The environment in which the tests run.
     required: true
 
 runs:
@@ -10,10 +10,9 @@ runs:
   steps:
     - uses: ./.github/actions/setup-app
 
-    - name: Generate native ${{ inputs.platform }} project
-      shell: bash
-      working-directory: app
-      run: pnpm expo prebuild --platform ${{ inputs.platform }}
+    - uses: expo/expo-github-action@main
+      with:
+        eas-version: latest
 
     - name: Install Maestro
       shell: bash
@@ -21,22 +20,12 @@ runs:
         curl -fsSL "https://get.maestro.mobile.dev" | bash
         echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
-    - name: Set up Supabase CLI
-      if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-      uses: supabase/setup-cli@v2
-
     - name: Start local Supabase instance
-      if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
-      shell: bash
-      run: |
-        supabase start
-        eval "$(supabase status -o env)"
-        echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
-        echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
-        echo "MAESTRO_MAILPIT_URL=$MAILPIT_URL" >> "$GITHUB_ENV"
+      if: ${{ inputs.environment == 'development' }}
+      uses: ./.github/actions/setup-local-supabase
 
     - name: Start Metro
-      if: env.MAESTRO_MAIL_PROVIDER == 'mailpit'
+      if: ${{ inputs.environment == 'development' }}
       shell: bash
       working-directory: app
       run: nohup pnpm start &

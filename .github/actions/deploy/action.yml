@@ -1,0 +1,48 @@
+name: Deploy app
+description: Publish an EAS update (with a QR comment on PRs) and, on production, submit fresh builds to the app stores.
+inputs:
+  environment:
+    description: The environment to deploy.
+    required: true
+  eas-environment:
+    description: The EAS environment containing the environment variables on EAS Cloud.
+    required: true
+  android-build-id:
+    description: The Android build to submit. If omitted, no build will be submitted.
+  ios-build-id:
+    description: The iOS build to submit. If omitted, no build will be submitted.
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup-app
+
+    - uses: expo/expo-github-action@main
+      with:
+        eas-version: latest
+
+    - name: Inject development environment variables
+      if: ${{ inputs.environment == 'development' }}
+      uses: ./.github/actions/setup-local-supabase
+      with:
+        supabase-url: http://sabr-dev.local:54321
+
+    - name: Publish EAS update (+ QR comment on PRs)
+      uses: expo/expo-github-action/preview@main
+      if: ${{ inputs.android-build-id == '' && inputs.ios-build-id == '' }}
+      with:
+        working-directory: app
+        comment: ${{ inputs.environment == 'development' }}
+        command: eas update --auto --branch ${{ inputs.environment == 'development' && github.head_ref || inputs.environment }} --environment ${{ inputs.eas-environment }}
+
+    - name: Submit Android build to the store
+      if: ${{ inputs.android-build-id != '' }}
+      working-directory: app
+      shell: bash
+      run: eas submit -p android --profile ${{ inputs.environment }} --id ${{ inputs.android-build-id }} --non-interactive
+
+    - name: Submit iOS build to the store
+      if: ${{ inputs.ios-build-id != '' }}
+      working-directory: app
+      shell: bash
+      run: eas submit -p ios --profile ${{ inputs.environment }} --id ${{ inputs.ios-build-id }} --non-interactive

@@ -1,4 +1,4 @@
-appId: app.sabr
+appId: ${MAESTRO_APP_ID}
 ---
 - launchApp:
     clearState: true
@@ -48,7 +48,9 @@ appId: app.sabr
 - openLink: "${output.auth.email.link}"
 # The following command is necessary for IOS, which has a dialog that asks the user if they want to open the link in the email first.
 # The same dialog is not present on Android.
-- tapOn:
-    text: "Open"
-    optional: true
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: Open
 - assertVisible: "Home"
