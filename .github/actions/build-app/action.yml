@@ -22,7 +22,7 @@ outputs:
     value: ${{ steps.build.outputs.ios-id || steps.fingerprint.outputs.ios-build-id }}
   is-fresh-build:
     description: '"true" if a new EAS Cloud build is launched because the native fingerprint changed, "false" if an existing EAS Cloud build is reused.'
-    value: ${{ steps.build.outputs.ios-id != '' || steps.build.outputs.android-id != '' }}
+    value: ${{ steps.build.outputs.android-id != '' || steps.build.outputs.ios-id != '' }}
 
 runs:
   using: composite
@@ -73,9 +73,7 @@ runs:
         working-directory: app
 
     - name: Build missing app(s) on EAS Cloud
-      if: >-
-        ${{ steps.fingerprint.outputs.ios-build-id == ''
-        || (inputs.is-ios-simulator-build == 'false' && steps.fingerprint.outputs.android-build-id == '') }}
+      if: ${{ steps.fingerprint.outputs.ios-build-id == '' || (inputs.is-ios-simulator-build == 'false' && steps.fingerprint.outputs.android-build-id == '') }}
       id: build
       working-directory: app
       shell: bash
