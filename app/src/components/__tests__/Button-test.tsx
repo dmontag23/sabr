@@ -2,7 +2,7 @@ import { render } from "@testing-library/react-native";
 import { Button } from "@/components/Button";
 
 describe("<Button />", () => {
-  test("renders the text as-written verbatim on every platform (without automatic capitalization on android)", () => {
+  test("renders the text as-written on every platform (without automatic capitalization on android)", () => {
     const { getByText } = render(<Button title="Send me a code" />);
 
     expect(getByText("Send me a code")).toBeVisible();
