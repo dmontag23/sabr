@@ -3,6 +3,7 @@ import * as aesjs from "aes-js";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import "react-native-get-random-values";
+import { Platform } from "react-native";
 
 /*
 As Expo's SecureStore does not support values larger than 2048
@@ -58,6 +59,9 @@ export const supabase = createClient(
   process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
   process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
   {
-    auth: { storage: largeSecureStore, flowType: "pkce" },
+    auth: {
+      ...(Platform.OS !== "web" && { storage: largeSecureStore }),
+      flowType: "pkce",
+    },
   },
 );
